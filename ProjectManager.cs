@@ -27,29 +27,33 @@ namespace iCode
 			TreeView treeView = Program.WinInstance.ProjectExplorer.TreeView;
 			TreeStore treeStore = (TreeStore) treeView.Model;
 			ProjectManager.Project = new Project(File.ReadAllText(file));
+
 			TreeIter parent = treeStore.AppendValues(new object[]
 			{
-				null,
+                IconLoader.LoadIcon(Program.WinInstance.ProjectExplorer, "gtk-directory", IconSize.Menu),
 				ProjectManager.Project.Name
 			});
+
 			TreeIter parent2 = treeStore.AppendValues(parent, new object[]
 			{
-				IconLoader.LoadIcon(Program.WinInstance.ProjectExplorer, "gtk-open", IconSize.Menu),
+				IconLoader.LoadIcon(Program.WinInstance.ProjectExplorer, "gtk-directory", IconSize.Menu),
 				"Resources"
 			});
+
 			foreach (Class @class in ProjectManager.Project.Classes)
 			{
-				treeStore.AppendValues(parent, new object[]
+                treeStore.AppendValues(parent, new object[]
 				{
-					null,
+                    Extensions.GetIconFromFile(Path.Combine(Directory.GetParent(file).FullName, Path.GetFileName(@class.Filename))),
 					Path.GetFileName(@class.Filename)
 				});
 			}
+
 			foreach (string path in Directory.GetFiles(Path.Combine(Path.GetDirectoryName(file), "Resources")))
 			{
 				treeStore.AppendValues(parent2, new object[]
 				{
-					null,
+                    Extensions.GetIconFromFile(Path.GetFullPath(path)),
 					Path.GetFileName(path)
 				});
 			}
@@ -61,6 +65,9 @@ namespace iCode
             var Frameworks = new List<string>();
             var Classes = new List<Class>();
             var Attributes = new JObject();
+
+            if (Directory.Exists(path))
+                Directory.Delete(path, true);
 
             Directory.CreateDirectory(path);
 
@@ -105,23 +112,23 @@ namespace iCode
             Attributes.Add("classes", classStruct);
 
             string temp = Path.GetTempFileName();
-            var template = Assembly.GetExecutingAssembly().GetManifestResourceStream("iCode.resources.archives.objective-c-template.tar").ToByteArray();
+            var template = Assembly.GetExecutingAssembly().GetManifestResourceStream("objc-template").ToByteArray();
             File.WriteAllBytes(temp, template);
 
             ZipFile.ExtractToDirectory(temp, path);
             File.Move(Path.Combine(path, "AppDelegate.m"), Path.Combine(path, prefix + "AppDelegate.m"));
-            File.WriteAllText(prefix + "AppDelegate.m", File.ReadAllText(prefix + "AppDelegate.m").Replace("@@CLASSPREFIX@@", prefix));
+            File.WriteAllText(Path.Combine(path, prefix + "AppDelegate.m"), File.ReadAllText(Path.Combine(path, prefix + "AppDelegate.m")).Replace("@@CLASSPREFIX@@", prefix));
 
             File.Move(Path.Combine(path, "AppDelegate.h"), Path.Combine(path, prefix + "AppDelegate.h"));
-            File.WriteAllText(prefix + "AppDelegate.h", File.ReadAllText(prefix + "AppDelegate.h").Replace("@@CLASSPREFIX@@", prefix));
+            File.WriteAllText(Path.Combine(path, prefix + "AppDelegate.h"), File.ReadAllText(Path.Combine(path, prefix + "AppDelegate.h")).Replace("@@CLASSPREFIX@@", prefix));
 
             File.Move(Path.Combine(path, "RootViewController.m"), Path.Combine(path, prefix + "RootViewController.m"));
-            File.WriteAllText(prefix + "RootViewController.m", File.ReadAllText(prefix + "RootViewController.m").Replace("@@CLASSPREFIX@@", prefix));
+            File.WriteAllText(Path.Combine(path, prefix + "RootViewController.m"), File.ReadAllText(Path.Combine(path, prefix + "RootViewController.m")).Replace("@@CLASSPREFIX@@", prefix));
 
             File.Move(Path.Combine(path, "RootViewController.h"), Path.Combine(path, prefix + "RootViewController.h"));
-            File.WriteAllText(prefix + "RootViewController.h", File.ReadAllText(prefix + "RootViewController.h").Replace("@@CLASSPREFIX@@", prefix));
+            File.WriteAllText(Path.Combine(path, prefix + "RootViewController.h"), File.ReadAllText(Path.Combine(path, prefix + "RootViewController.h")).Replace("@@CLASSPREFIX@@", prefix));
 
-            File.WriteAllText(prefix + "main.m", File.ReadAllText(prefix + "main.m").Replace("@@CLASSPREFIX@@", prefix));
+            File.WriteAllText(Path.Combine(path, "main.m"), File.ReadAllText(Path.Combine(path, "main.m")).Replace("@@CLASSPREFIX@@", prefix));
 
             File.WriteAllText(Path.Combine(path, "project.json"), Attributes.ToString());
             return new Project(Attributes.ToString());

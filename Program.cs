@@ -1,16 +1,31 @@
 ﻿using System;
+using Gdl;
 using Gtk;
 
 namespace iCode
 {
-    class MainClass
-    {
-        public static void Main(string[] args)
+	internal class Program
+	{
+		public static void Main(string[] args)
         {
-            Application.Init();
-            MainWindow win = new MainWindow();
-            win.Show();
-            Application.Run();
+            System.Console.SetOut(new DatedConsole());
+            Console.WriteLine("Initialized output.");
+
+            try
+            {
+                Gtk.Application.Init();
+                Console.WriteLine("Initialized GTK and GDL.");
+                Program.WinInstance = new MainWindow();
+                Program.WinInstance.ShowAll();
+                Console.WriteLine("Initialized window.");
+                Gtk.Application.Run();
+            }
+            catch (Exception e)
+            {
+                new ExceptionWindow(e, null).ShowAll();
+            }
         }
-    }
+
+		public static MainWindow WinInstance;
+	}
 }

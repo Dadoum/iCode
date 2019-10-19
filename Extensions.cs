@@ -1,8 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
+using Gdk;
 using Gtk;
+using iCode;
 using Pango;
 
 public static class Extensions
@@ -51,5 +55,44 @@ public static class Extensions
             ms.Write(input, 0, input.Length);
             return ms;
         }
+    }
+
+    public static Pixbuf GetIconFromFile(string path)
+    {
+        string[] mimetypes = LaunchProcess("gio", string.Format("info -a standard::icon '{0}'", path)).Split('\n')[2].Split(new string[] { ": " },  StringSplitOptions.None)[1].Split(new string[] { ", " }, StringSplitOptions.None);
+        mimetypes[0] = mimetypes[0].TrimStart(' ');
+
+        string theme = LaunchProcess("gsettings", "get org.gnome.desktop.interface icon-theme");
+        theme = theme.TrimEnd('\n').Trim('\'');
+
+        foreach (string s in mimetypes)
+        {
+            string file = string.Format("/usr/share/icons/{0}/mimetypes/16/{1}.svg", theme, s);
+            Console.WriteLine(file);
+
+            if (File.Exists(file))
+            {
+                var pixbufld = new PixbufLoader();
+                pixbufld.Write(Encoding.UTF8.GetBytes(File.ReadAllText(file)));
+                pixbufld.Close();
+                return pixbufld.Pixbuf;
+            }
+        }
+
+        return IconLoader.LoadIcon(Program.WinInstance, "gtk-file", IconSize.Menu);
+    }
+
+    private static string LaunchProcess(string process, string arguments)
+    {
+        var proc = new Process();
+        proc.StartInfo.Arguments = arguments;
+        proc.StartInfo.FileName = process;
+        proc.StartInfo.UseShellExecute = false;
+        proc.StartInfo.RedirectStandardOutput = true;
+
+        proc.Start();
+        proc.WaitForExit();
+
+        return proc.StandardOutput.ReadToEnd();
     }
 }

@@ -122,7 +122,7 @@ public partial class MainWindow
 		this.button6.CanFocus = true;
 		this.button6.Name = "button6";
 		this.button6.UseUnderline = true;
-		this.button6.Label = global::Mono.Unix.Catalog.GetString("Run");
+		this.button6.Label = global::Mono.Unix.Catalog.GetString("Launch");
 		this.hbox2.Add(this.button6);
 		global::Gtk.Box.BoxChild w3 = ((global::Gtk.Box.BoxChild)(this.hbox2[this.button6]));
 		w3.Position = 0;
@@ -184,5 +184,6 @@ public partial class MainWindow
 		this.Show();
 		this.DeleteEvent += new global::Gtk.DeleteEventHandler(this.OnDeleteEvent);
 		this.OpenProjectAction.Activated += new global::System.EventHandler(this.LoadProjectActivated);
+		this.CreateProjectAction.Activated += new global::System.EventHandler(this.OpenProject);
 	}
 }
