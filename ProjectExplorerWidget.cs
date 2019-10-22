@@ -20,18 +20,6 @@ namespace iCode
 				typeof(string)
 			});
 			this.treeview1.Model = model;
-            /*TreeViewColumn treeViewColumn = new TreeViewColumn();
-			this.treeview1.AppendColumn("Icon", new CellRendererPixbuf(), new object[]
-			{
-				"pixbuf",
-				0
-			});
-			this.treeview1.AppendColumn(treeViewColumn);
-			CellRendererText cell = new CellRendererText();
-            treeViewColumn.PackStart(cell, true);
-            treeViewColumn.AddAttribute(cell, "icon", 0);
-			treeViewColumn.AddAttribute(cell, "text", 1);
-            treeViewColumn.PackStart(cell, true);*/
             CellRendererText ct = new CellRendererText();
             CellRendererPixbuf cb = new CellRendererPixbuf();
             TreeViewColumn column = new TreeViewColumn();

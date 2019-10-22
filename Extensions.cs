@@ -26,18 +26,50 @@ public static class Extensions
 
 	public static void Add(this Notebook notebook, Widget widget, string str, bool isVolatile)
 	{
-		NotebookTabLabel notebookTabLabel = new NotebookTabLabel(str);
-		notebook.AppendPage(widget, notebookTabLabel);
-		notebookTabLabel.CloseClicked += delegate(object obj, EventArgs eventArgs)
-		{
-			notebook.RemovePage(notebook.PageNum(widget));
-		};
-		notebook.SetTabDetachable(widget, isVolatile);
-		notebook.SetTabReorderable(widget, isVolatile);
-		Extensions.tabs.Add(str, widget);
-		widget.ShowAll();
-		notebookTabLabel.ShowAll();
-	}
+        try
+        {
+            widget.Name = str;
+            Extensions.tabs.Add(str, widget);
+
+            ScrolledWindow scrolledWindow = new ScrolledWindow();
+            scrolledWindow.Add(widget);
+            scrolledWindow.Name = str;
+            if (widget is CodeTabWidget)
+            {
+                notebook.AppendPage(scrolledWindow, ((widget as CodeTabWidget).GetLabel()));
+                (widget as CodeTabWidget).GetLabel().ShowAll();
+                (widget as CodeTabWidget).GetLabel().CloseClicked += delegate (object obj, EventArgs eventArgs)
+                {
+                    notebook.RemovePage(notebook.PageNum(notebook.Children.First(x => x == scrolledWindow)));
+                    Extensions.tabs.Remove(str);
+                };
+            }
+            else
+            {
+                NotebookTabLabel notebookTabLabel = new NotebookTabLabel(str, widget);
+                notebookTabLabel.CloseClicked += delegate (object obj, EventArgs eventArgs)
+                {
+                    notebook.RemovePage(notebook.PageNum(notebook.Children.First(x => x == scrolledWindow)));
+                    Extensions.tabs.Remove(str);
+                };
+                notebook.AppendPage(scrolledWindow, notebookTabLabel);
+                notebookTabLabel.ShowAll();
+            }
+
+            notebook.SetTabDetachable(scrolledWindow, isVolatile);
+            notebook.SetTabReorderable(scrolledWindow, isVolatile);
+
+            widget.ShowAll();
+        }
+        catch (ArgumentException)
+        {
+            notebook.Page = notebook.PageNum(tabs.First(x => x.Key == str).Value);
+        }
+        catch (Exception e)
+        {
+            new ExceptionWindow(e, notebook).ShowAll();
+        }
+    }
 
     public static byte[] ToByteArray(this Stream input)
     {
@@ -68,8 +100,6 @@ public static class Extensions
         foreach (string s in mimetypes)
         {
             string file = string.Format("/usr/share/icons/{0}/mimetypes/16/{1}.svg", theme, s);
-            Console.WriteLine(file);
-
             if (File.Exists(file))
             {
                 var pixbufld = new PixbufLoader();

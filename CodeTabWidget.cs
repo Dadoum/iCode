@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using Gtk;
 using GtkSourceView;
 
@@ -9,30 +11,64 @@ namespace iCode
 	public class CodeTabWidget : SourceView
     {
         private string s;
+        private string file;
+        private string actualText;
 
-        public CodeTabWidget()
+        private List<Gdk.Key> keys;
+
+        private NotebookTabLabel notebookTabLabel;
+
+        public CodeTabWidget(string file)
 		{
+            keys = new List<Gdk.Key>();
+            base.Buffer = new SourceBuffer(new SourceLanguageManager().GetLanguage("objc"));
+            notebookTabLabel = new NotebookTabLabel(System.IO.Path.GetFileName(file), this);
+            this.file = file;
+            actualText = File.ReadAllText(file);
+            Buffer.Text = actualText;
+            this.KeyPressEvent += Handle_KeyPressEvent;
+            this.KeyReleaseEvent += Handle_KeyReleaseEvent;
 			base.AutoIndent = true;
 			base.ShowLineMarks = true;
 			base.ShowLineNumbers = true;
 			base.HighlightCurrentLine = false;
 			base.IndentOnTab = true;
-			base.Buffer = new SourceBuffer(new SourceLanguageManager().GetLanguage("objc"));
 			this.s = base.Buffer.Text;
 			base.Buffer.Changed += this.Buffer_Changed;
 		}
 
 		private void Buffer_Changed(object sender, EventArgs e)
 		{
-			int cursorPosition = base.Buffer.CursorPosition;
-			Program.WinInstance.StateLabel.Text = "Cursor is at " + base.Buffer.CursorPosition + " position";
+            #region CODE SAVING
+            if (actualText != Buffer.Text)
+            {
+                if (!notebookTabLabel.Label.Text.EndsWith("*", StringComparison.CurrentCulture))
+                {
+                    notebookTabLabel.Label.Text += "*";
+                }
+            }
+            else
+            {
+                if (notebookTabLabel.Label.Text.EndsWith("*", StringComparison.CurrentCulture))
+                {
+                    notebookTabLabel.Label.Text = notebookTabLabel.Label.Text.TrimEnd('*');
+                }
+            }
+            #endregion
+
+            if (e == null)
+                return;
+
+            #region CODE COMPLETION
+            int cursorPosition = base.Buffer.CursorPosition;
 			bool flag = this.s.Length == base.Buffer.Text.Length - 1;
 			if (flag)
 			{
 				char c = base.Buffer.Text[cursorPosition - 1];
 				char c2 = c;
 				char c3 = c2;
-				if (c3 != '\n')
+
+                if (c3 != '\n')
 				{
 					if (c3 == '{')
 					{
@@ -98,14 +134,44 @@ namespace iCode
 				}
 			}
 			this.s = base.Buffer.Text;
-		}
+            #endregion
+        }
 
-		private void SetText(string text)
+        void Handle_KeyPressEvent(object o, KeyPressEventArgs args)
+        {
+            Console.WriteLine(args.Event.Key + " pressed");
+            keys.Add(args.Event.Key);
+
+            if ((keys.Contains(Gdk.Key.s) || keys.Contains(Gdk.Key.S)) && (keys.Contains(Gdk.Key.Control_L) || keys.Contains(Gdk.Key.Control_R)))
+            {
+                SaveFile();
+            }
+        }
+
+        void Handle_KeyReleaseEvent(object o, KeyReleaseEventArgs args)
+        {
+            Console.WriteLine(args.Event.Key + " released");
+            keys.Remove(args.Event.Key);
+        }
+
+        public void SaveFile()
+        {
+            File.WriteAllText(file, Buffer.Text);
+            actualText = Buffer.Text;
+            Buffer_Changed(null, null);
+        }
+
+        public void SetText(string text)
 		{
 			Application.Invoke((a, b) =>
 			{
 				this.Buffer.Text = text;
 			});
 		}
-	}
+
+        public NotebookTabLabel GetLabel()
+        {
+            return notebookTabLabel;
+        }
+    }
 }

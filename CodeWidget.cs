@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Gtk;
+using System.IO;
 
 namespace iCode
 {
@@ -22,27 +25,58 @@ namespace iCode
 			CodeWidget.codewidget.tabs.ShowAll();
 		}
 
-		public static void AddCodeTab(string name)
+		public static CodeTabWidget AddCodeTab(string file)
 		{
-			ScrolledWindow scrolledWindow = new ScrolledWindow();
-			scrolledWindow.Add(new CodeTabWidget());
-			CodeWidget.codewidget.tabs.Add(scrolledWindow, name, true);
-			scrolledWindow.ShowAll();
+            var c = new CodeTabWidget(file);
+            CodeWidget.codewidget.tabs.Add(c, System.IO.Path.GetFileName(file), true);
+			c.ShowAll();
 			CodeWidget.codewidget.tabs.ShowAll();
+            return c;
 		}
 
 		public static void RemoveTab(string name)
 		{
-			CodeWidget.codewidget.tabs.Remove(Extensions.tabs[name]);
-			Extensions.tabs.Remove(name);
-		}
+            try
+            {
+                (CodeWidget.codewidget.tabs.GetTabLabel(
+                    CodeWidget.codewidget.tabs.Children.First(
+                        x => (x as ScrolledWindow).Name == name)
+                ) as NotebookTabLabel).OnCloseClicked();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("SEVERE -> {0}", e);
+            }
+        }
 
 		private CodeWidget()
 		{
 			base.SetSizeRequest(300, 1);
 			this.tabs = new Notebook();
 			this.tabs.ShowAll();
-			base.Add(this.tabs);
-		}
-	}
+            ScrolledWindow window = new ScrolledWindow();
+            window.Add(tabs);
+			base.Add(window);
+            window.ShowAll();
+            tabs.PageReordered += Tabs_PageReordered;
+        }
+
+        public void Tabs_PageReordered(object o = null, PageReorderedArgs args = null)
+        {
+            var dict = new Dictionary<string, Widget>();
+            foreach (var c in tabs.Children)
+            {
+                try
+                {
+                    dict.Add(Extensions.tabs.First(x => x.Value == c).Key, c);
+                }
+                catch
+                {
+
+                }
+            }
+            Extensions.tabs = dict;
+        }
+
+    }
 }

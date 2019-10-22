@@ -37,40 +37,58 @@
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="Mono.Posix" />
+    <Reference Include="System">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Mono.Posix">
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Gdl">
       <HintPath>..\Gdl.dll</HintPath>
-    </Reference>
-    <Reference Include="gtksourceview3-sharp">
-      <HintPath>..\gtksourceview3-sharp.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="gio-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
       <Package>gio-sharp-3.0</Package>
+      <Private>True</Private>
     </Reference>
     <Reference Include="gtk-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
       <Package>gtk-sharp-3.0</Package>
+      <Private>True</Private>
     </Reference>
     <Reference Include="gdk-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
       <Package>gdk-sharp-3.0</Package>
+      <Private>True</Private>
     </Reference>
     <Reference Include="glib-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
       <Package>glib-sharp-3.0</Package>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="glade-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
+    <Reference Include="glade-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
+      <Private>True</Private>
+    </Reference>
     <Reference Include="pango-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
       <Package>gtk-sharp-3.0</Package>
+      <Private>True</Private>
     </Reference>
     <Reference Include="atk-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
       <Package>gtk-sharp-3.0</Package>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>packages\Newtonsoft.Json.12.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
-    <Reference Include="System.IO.Compression" />
-    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.IO.Compression">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.IO.Compression.FileSystem">
+      <Private>True</Private>
+    </Reference>
     <Reference Include="cairo-sharp, Version=1.10.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756">
       <Package>gtk-sharp-3.0</Package>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="gtksourceview3-sharp">
+      <HintPath>..\gtksourceview3-sharp.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -80,6 +98,9 @@
     <EmbeddedResource Include="resources\images\icon.png" />
     <EmbeddedResource Include="resources\archives\objective-c-template.zip">
       <LogicalName>objc-template</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="resources\forms\NewProjectWindow.gtkbuilder">
+      <LogicalName>NewProject</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
@@ -105,7 +126,10 @@
     <Compile Include="gtk-gui\iCode.ProjectExplorerWidget.cs" />
     <Compile Include="gtk-gui\iCode.WelcomeWidget.cs" />
     <Compile Include="gtk-gui\iCode.ExceptionWindow.cs" />
-    <Compile Include="ProjectManager.cs" />
+    <Compile Include="ProjectManager.cs">
+      <IncludeInPackage>false</IncludeInPackage>
+    </Compile>
+    <Compile Include="NewProjectWindow.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -114,6 +138,7 @@
   <ItemGroup>
     <Folder Include="Stetic\" />
     <Folder Include="resources\archives\" />
+    <Folder Include="resources\forms\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

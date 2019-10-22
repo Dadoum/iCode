@@ -72,6 +72,7 @@ public partial class MainWindow : Gtk.Window
             boxChild.Expand = true;
             boxChild.Fill = true;
             base.Add(this.container);
+            this.Icon = Pixbuf.LoadFromResource("iCode.resources.images.icon.png");
 
         }
         catch (Exception e)
@@ -136,8 +137,14 @@ public partial class MainWindow : Gtk.Window
     private DockLayout layout;
     private DockBar bar;
 
-    protected void OpenProject(object sender, EventArgs e)
+    protected void CreateProject(object sender, EventArgs e)
     {
-        ProjectManager.CreateProject("anothertestproject", "just.to.confirm", "plz");
+        var dialog = NewProjectWindow.Create();
+
+        if (dialog.Run() == (int) ResponseType.Ok)
+        {
+            ProjectManager.CreateProject(dialog.ProjectName, dialog.Id, dialog.Prefix);
+            ProjectManager.LoadProject(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "iCode Projects/", dialog.ProjectName, "project.json"));
+        }
     }
 }

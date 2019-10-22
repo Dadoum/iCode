@@ -6,6 +6,7 @@
   </configuration>
   <import>
     <widget-library name="../bin/Debug/iCode.exe" internal="true" />
+    <widget-library name="../../gtksourceview3-sharp.dll" />
   </import>
   <widget class="Gtk.Window" id="MainWindow" design-size="867 664">
     <action-group name="Default">
@@ -59,7 +60,7 @@
         <property name="Type">Action</property>
         <property name="Label" translatable="yes">Create project...</property>
         <property name="ShortLabel" translatable="yes">Create project...</property>
-        <signal name="Activated" handler="OpenProject" />
+        <signal name="Activated" handler="CreateProject" />
       </action>
       <action id="AboutICodeAction">
         <property name="Type">Action</property>
@@ -454,7 +455,7 @@
         <child>
           <widget class="Gtk.Label" id="ExceptionTitle">
             <property name="MemberName" />
-            <property name="LabelProp" translatable="yes">Object is set</property>
+            <property name="LabelProp" translatable="yes">Message</property>
             <property name="UseMarkup">True</property>
           </widget>
           <packing>
@@ -478,7 +479,7 @@
         <child>
           <widget class="Gtk.Label" id="ExceptionStacktrace">
             <property name="MemberName" />
-            <property name="LabelProp" translatable="yes">label3</property>
+            <property name="LabelProp" translatable="yes">stacktrace</property>
             <property name="UseMarkup">True</property>
           </widget>
           <packing>
