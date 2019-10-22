@@ -68,7 +68,7 @@ namespace Stetic
 	{
 		public static Gdk.Pixbuf LoadIcon(Gtk.Widget widget, string name, Gtk.IconSize size)
 		{
-			Gdk.Pixbuf res = widget.RenderIcon(name, size, null);
+			Gdk.Pixbuf res = widget.RenderIconPixbuf(name, size);
 			if ((res != null))
 			{
 				return res;

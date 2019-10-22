@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="packages\Costura.Fody.4.1.0\build\Costura.Fody.props" Condition="Exists('packages\Costura.Fody.4.1.0\build\Costura.Fody.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
@@ -8,6 +9,10 @@
     <RootNamespace>iCode</RootNamespace>
     <AssemblyName>iCode</AssemblyName>
     <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <DebugSymbols>true</DebugSymbols>
@@ -41,10 +46,6 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Mono.Posix">
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Gdl">
-      <HintPath>..\Gdl.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="gio-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
@@ -89,6 +90,12 @@
     </Reference>
     <Reference Include="gtksourceview3-sharp">
       <HintPath>..\gtksourceview3-sharp.dll</HintPath>
+    </Reference>
+    <Reference Include="Costura">
+      <HintPath>packages\Costura.Fody.4.1.0\lib\net40\Costura.dll</HintPath>
+    </Reference>
+    <Reference Include="Gdl">
+      <HintPath>..\Gdl.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -141,4 +148,5 @@
     <Folder Include="resources\forms\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <Import Project="packages\Fody.6.0.0\build\Fody.targets" Condition="Exists('packages\Fody.6.0.0\build\Fody.targets')" />
 </Project>

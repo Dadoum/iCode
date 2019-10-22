@@ -8,12 +8,14 @@ namespace iCode
     {
         Builder builder;
 
+#pragma warning disable 649
         [UI] private Gtk.Button button_ok;
         [UI] private Gtk.Button button_cancel;
 
         [UI] private Gtk.Entry input_name;
         [UI] private Gtk.Entry input_id;
         [UI] private Gtk.Entry input_prefix;
+#pragma warning disable 649
 
         public string ProjectName;
 

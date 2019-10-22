@@ -112,7 +112,7 @@ public static class Extensions
         return IconLoader.LoadIcon(Program.WinInstance, "gtk-file", IconSize.Menu);
     }
 
-    private static string LaunchProcess(string process, string arguments)
+    public static string LaunchProcess(string process, string arguments)
     {
         var proc = new Process();
         proc.StartInfo.Arguments = arguments;

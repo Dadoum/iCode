@@ -186,5 +186,10 @@ namespace iCode
             File.WriteAllText(Path.Combine(path, "project.json"), Attributes.ToString());
             return new Project(Attributes.ToString());
         }
+
+        public static void BuildProject()
+        {
+
+        }
     }
 }
