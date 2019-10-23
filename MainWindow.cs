@@ -73,6 +73,10 @@ public partial class MainWindow : Gtk.Window
             boxChild.Fill = true;
             base.Add(this.container);
             this.Icon = Pixbuf.LoadFromResource("iCode.resources.images.icon.png");
+            this.BuildProjectAction.Activated += (sender, e) => 
+            {
+                ProjectManager.BuildProject();
+            };
 
         }
         catch (Exception e)

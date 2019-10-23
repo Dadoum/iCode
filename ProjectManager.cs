@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using Gtk;
@@ -11,7 +12,7 @@ using Stetic;
 
 namespace iCode
 {
-	public static class ProjectManager
+    public static class ProjectManager
     {
         public static Project Project;
 
@@ -22,18 +23,18 @@ namespace iCode
         private static List<TreeIter> resourceNodes = new List<TreeIter>();
 
         public static bool ProjectLoaded
-		{
-			get
-			{
-				return ProjectManager.Project != null;
-			}
-		}
+        {
+            get
+            {
+                return ProjectManager.Project != null;
+            }
+        }
 
-		public static void LoadProject(string file)
-		{
-			TreeView treeView = Program.WinInstance.ProjectExplorer.TreeView;
-			TreeStore treeStore = (TreeStore) treeView.Model;
-			ProjectManager.Project = new Project(File.ReadAllText(file));
+        public static void LoadProject(string file)
+        {
+            TreeView treeView = Program.WinInstance.ProjectExplorer.TreeView;
+            TreeStore treeStore = (TreeStore) treeView.Model;
+            ProjectManager.Project = new Project(file);
 
             CodeWidget.RemoveTab("Welcome to iCode !");
 
@@ -76,38 +77,38 @@ namespace iCode
                         break;
                 }
             };
-			projectNode = treeStore.AppendValues(new object[]
-			{
+            projectNode = treeStore.AppendValues(new object[]
+            {
                 IconLoader.LoadIcon(Program.WinInstance.ProjectExplorer, "gtk-directory", IconSize.Menu),
-				ProjectManager.Project.Name
-			});
+                ProjectManager.Project.Name
+            });
 
             resourcesNode = treeStore.AppendValues(projectNode, new object[]
-			{
-				IconLoader.LoadIcon(Program.WinInstance.ProjectExplorer, "gtk-directory", IconSize.Menu),
-				"Resources"
-			});
+            {
+                IconLoader.LoadIcon(Program.WinInstance.ProjectExplorer, "gtk-directory", IconSize.Menu),
+                "Resources"
+            });
 
-			foreach (Class @class in ProjectManager.Project.Classes)
-			{
+            foreach (Class @class in ProjectManager.Project.Classes)
+            {
                 var node = treeStore.AppendValues(projectNode, 
                     Extensions.GetIconFromFile(Path.Combine(Directory.GetParent(file).FullName, Path.GetFileName(@class.Filename))),
-					Path.GetFileName(@class.Filename)
-				);
+                    Path.GetFileName(@class.Filename)
+                );
 
                 classNodes.Add(node);
-			}
+            }
 
-			foreach (string path in Directory.GetFiles(Path.Combine(Path.GetDirectoryName(file), "Resources")))
-			{
-				var node = treeStore.AppendValues(resourcesNode, 
+            foreach (string path in Directory.GetFiles(Path.Combine(Path.GetDirectoryName(file), "Resources")))
+            {
+                var node = treeStore.AppendValues(resourcesNode, 
                     Extensions.GetIconFromFile(Path.GetFullPath(path)),
-					Path.GetFileName(path)
-				);
+                    Path.GetFileName(path)
+                );
 
                 resourceNodes.Add(node);
-			}
-		}
+            }
+        }
 
         public static Project CreateProject(string name, string id, string prefix)
         {
@@ -184,12 +185,45 @@ namespace iCode
 
 
             File.WriteAllText(Path.Combine(path, "project.json"), Attributes.ToString());
-            return new Project(Attributes.ToString());
+            return new Project(Path.Combine(path, "project.json"));
         }
 
         public static void BuildProject()
         {
+            var cachedir = Path.Combine(Project.Path, ".icode");
 
+            if (Directory.Exists(cachedir))
+                Directory.Delete(cachedir, true);
+
+            Directory.CreateDirectory(cachedir);
+            string s = "";
+            foreach (var @class in from c in Project.Classes where c.Filename.EndsWith(".m", StringComparison.CurrentCulture) select c)
+            {
+                Directory.CreateDirectory(Path.Combine(cachedir, "build"));
+                Extensions.LaunchProcess("clang", @"-target '" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/target/arm64-apple-darwin14") + "' -x objective-c -c -isysroot '" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/sdk") + "' -fmodules " + string.Join(" ", @class.CompilerFlags) + "-arch arm64 '" + Path.Combine(Project.Path, @class.Filename) + "' -o '" + Path.Combine(cachedir, "build", @class.Filename + ".output") + "'");
+                s += "'" + Path.Combine(cachedir, "build", @class.Filename + ".output") + "' ";
+            }
+
+            Directory.CreateDirectory(Path.Combine(Project.Path, ".icode/Payload/" + Project.Name + ".app/"));
+            Extensions.LaunchProcess("clang", @"-target '" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/target/arm64-apple-darwin14") + "' -framework " + string.Join(" -framework ", Project.Frameworks)  + " -isysroot '" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/sdk") + "' -arch arm64 -o '" + Path.Combine(Project.Path, ".icode/Payload/" + Project.Name + ".app/" + Project.Name) + "' " + s);
+
+            foreach (var f in Directory.GetFiles(Path.Combine(Project.Path, "Resources"))) 
+            {
+                File.Copy(f, Path.Combine(Project.Path, ".icode/Payload/" + Project.Name + ".app/"));
+            }
+
+            Directory.Delete(Path.Combine(cachedir, "build"), true);
+
+            if (!Directory.Exists(Path.Combine(Project.Path, "build")))
+                Directory.CreateDirectory(Path.Combine(Project.Path, "build"));
+
+            ZipFile.CreateFromDirectory(cachedir, Path.Combine(Project.Path, "build/" + Project.Name + "-unsigned.ipa"));
+            SignIpa(Path.Combine(Project.Path, "build/" + Project.Name + "-unsigned.ipa"));
+        }
+
+        public static void SignIpa(string path)
+        {
+            Console.WriteLine("Not implemented yet; sorry !");
         }
     }
 }

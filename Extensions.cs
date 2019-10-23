@@ -122,7 +122,7 @@ public static class Extensions
 
         proc.Start();
         proc.WaitForExit();
-
+        Console.WriteLine(process + " " + arguments);
         return proc.StandardOutput.ReadToEnd();
     }
 }

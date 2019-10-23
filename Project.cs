@@ -11,17 +11,19 @@ namespace iCode
 
         public string Name;
         public string BundleId;
+        public string Path;
 
         public List<string> Frameworks;
         public List<Class> Classes;
 
-        internal Project(string text)
+        internal Project(string path)
 		{
 			this.Frameworks = new List<string>();
 			this.Classes = new List<Class>();
-			this.Attributes = JObject.Parse(text);
+			this.Attributes = JObject.Parse(File.ReadAllText(path));
 			this.Name = this.Attributes["name"].ToString();
 			this.BundleId = this.Attributes["package"].ToString();
+            this.Path = System.IO.Path.GetDirectoryName(path);
 
 			foreach (JToken jtoken in this.Attributes["frameworks"])
 			{
