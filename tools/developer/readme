@@ -1,0 +1,7 @@
+You need to place here 3 files which will be used for signing. You can use the helper script named 'gen-certs' to generate the all of these files or you can place it manually.
+
+The structure is:
+ - provision-profile.mobileprovision
+ - certificate.pem
+ - key.pem
+(- CSR is not mandatory)
