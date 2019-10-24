@@ -27,7 +27,7 @@ namespace iCode
 
         public string Prefix;
 
-        public string Path;
+        public new string Path;
 
         public static NewProjectWindow Create()
         {

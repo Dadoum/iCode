@@ -262,6 +262,9 @@ namespace iCode
 
         public static void SignIpa(string path)
         {
+            if (File.Exists(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/developer/key.pem")))
+                return;
+
             if (File.Exists(Path.Combine(Project.Path, "build/" + Project.Name + ".ipa")))
                 File.Delete(Path.Combine(Project.Path, "build/" + Project.Name + ".ipa"));
 

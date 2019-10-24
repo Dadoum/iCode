@@ -107,6 +107,14 @@ public static class Extensions
                 pixbufld.Close();
                 return pixbufld.Pixbuf;
             }
+            file = string.Format("/usr/share/icons/{0}/16x16/mimetypes/{1}.svg", theme, s);
+            if (File.Exists(file))
+            {
+                var pixbufld = new PixbufLoader();
+                pixbufld.Write(Encoding.UTF8.GetBytes(File.ReadAllText(file)));
+                pixbufld.Close();
+                return pixbufld.Pixbuf;
+            }
         }
 
         return IconLoader.LoadIcon(Program.WinInstance, "gtk-file", IconSize.Menu);
