@@ -31,6 +31,11 @@
           <workingdir>${ProjectDir}</workingdir>
           <externalConsole>True</externalConsole>
         </Command>
+        <Command>
+          <type>AfterBuild</type>
+          <command>chmod +x iCode.exe</command>
+          <workingdir>${TargetDir}</workingdir>
+        </Command>
       </CustomCommands>
     </CustomCommands>
   </PropertyGroup>
@@ -40,6 +45,27 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
+    <CustomCommands>
+      <CustomCommands>
+        <Command>
+          <type>BeforeBuild</type>
+          <command>Patches.sh</command>
+          <workingdir>${ProjectDir}</workingdir>
+          <externalConsole>True</externalConsole>
+        </Command>
+        <Command>
+          <type>AfterBuild</type>
+          <command>chmod +x iCode.exe</command>
+          <workingdir>${TargetDir}</workingdir>
+        </Command>
+        <Command>
+          <type>AfterBuild</type>
+          <name>Pack tar.gz</name>
+          <command>tar -czvf iCode.tar.gz iCode.exe tools/</command>
+          <workingdir>${TargetDir}</workingdir>
+        </Command>
+      </CustomCommands>
+    </CustomCommands>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Newtonsoft.Json">
