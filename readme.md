@@ -1,4 +1,4 @@
-﻿# iCode
+﻿# iCode [![Build Status](https://dev.azure.com/DadoumDev/iCode/_apis/build/status/Dadoum.iCode?branchName=master)](https://dev.azure.com/DadoumDev/iCode/_build/latest?definitionId=1&branchName=master)
 iCode is a complex heavyweight unreliable iOS IDE for Linux.
 
 ## How do I run it ?
