@@ -33,12 +33,14 @@ namespace iCode
         public static void LoadProject(string file)
         {
             TreeView treeView = Program.WinInstance.ProjectExplorer.TreeView;
-            TreeStore treeStore = (TreeStore) treeView.Model;
+            TreeStore treeStore = (TreeStore)treeView.Model;
             ProjectManager.Project = new Project(file);
 
+            treeStore.Clear();
+            
             CodeWidget.RemoveTab("Welcome to iCode !");
 
-            treeView.RowActivated += (o, args) => 
+            treeView.RowActivated += (o, args) =>
             {
                 TreeIter treeIter;
                 treeStore.GetIter(out treeIter, args.Path);
@@ -69,11 +71,11 @@ namespace iCode
                 switch (type)
                 {
                     case 1:
-                        var code = CodeWidget.AddCodeTab(Path.Combine(Path.GetDirectoryName(file), (string) treeStore.GetValue(treeIter, 1)));
+                        var code = CodeWidget.AddCodeTab(Path.Combine(Path.GetDirectoryName(file), (string)treeStore.GetValue(treeIter, 1)));
                         break;
 
                     case 2:
-                        Process.Start("gio", "open '" + Path.Combine(Path.GetDirectoryName(file), "Resources", (string) treeStore.GetValue(treeIter, 1)) + "'");
+                        Process.Start("gio", "open '" + Path.Combine(Path.GetDirectoryName(file), "Resources", (string)treeStore.GetValue(treeIter, 1)) + "'");
                         break;
                 }
             };
@@ -91,7 +93,7 @@ namespace iCode
 
             foreach (Class @class in ProjectManager.Project.Classes)
             {
-                var node = treeStore.AppendValues(projectNode, 
+                var node = treeStore.AppendValues(projectNode,
                     Extensions.GetIconFromFile(Path.Combine(Directory.GetParent(file).FullName, Path.GetFileName(@class.Filename))),
                     Path.GetFileName(@class.Filename)
                 );
@@ -101,18 +103,53 @@ namespace iCode
 
             foreach (string path in Directory.GetFiles(Path.Combine(Path.GetDirectoryName(file), "Resources")))
             {
-                var node = treeStore.AppendValues(resourcesNode, 
+                var node = treeStore.AppendValues(resourcesNode,
                     Extensions.GetIconFromFile(Path.GetFullPath(path)),
                     Path.GetFileName(path)
                 );
 
                 resourceNodes.Add(node);
             }
+
+            var filea = "";
+
+            using (var f = File.Open(Path.Combine(Program.ConfigPath, "recentProjects"), FileMode.OpenOrCreate))
+            {
+                var wr = new StreamWriter(f);
+                var re = new StreamReader(f);
+                var content = re.ReadToEnd();
+                var lines = content.Split('\n').ToList();
+                if (lines.Count == 4)
+                {
+                    lines.Remove(lines.First());
+                }
+
+                var temp = new List<string>();
+                foreach (var line in from l in lines where l == Path.GetDirectoryName(file) select l)
+                {
+                    temp.Add(line);
+                }
+
+                foreach (var temp2 in temp)
+                {
+                    lines.Remove(temp2);
+                }
+
+                lines.Add(Path.GetDirectoryName(file));
+
+                filea = string.Join("\n", lines);
+                wr.Dispose();
+                re.Dispose();
+            }
+
+            File.WriteAllText(Path.Combine(Program.ConfigPath, "recentProjects"), filea);
         }
 
-        public static Project CreateProject(string name, string id, string prefix)
+        public static Project CreateProject(string name, string id, string prefix, string path = null)
         {
-            var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "iCode Projects/", name);
+            if (string.IsNullOrWhiteSpace(path))
+                path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "iCode Projects/", name);
+
             var Frameworks = new List<string>();
             var Classes = new List<Class>();
             var Attributes = new JObject();
@@ -183,7 +220,6 @@ namespace iCode
 
             File.WriteAllText(Path.Combine(path, "Resources/Info.plist"), File.ReadAllText(Path.Combine(path, "Resources/Info.plist")).Replace("@@CLASSPREFIX@@", prefix).Replace("@@PROJECTNAME@@", name).Replace("@@PACKAGENAME@@", id));
 
-
             File.WriteAllText(Path.Combine(path, "project.json"), Attributes.ToString());
             return new Project(Path.Combine(path, "project.json"));
         }
@@ -217,13 +253,25 @@ namespace iCode
             if (!Directory.Exists(Path.Combine(Project.Path, "build")))
                 Directory.CreateDirectory(Path.Combine(Project.Path, "build"));
 
+            if (File.Exists(Path.Combine(Project.Path, "build/" + Project.Name + "-unsigned.ipa")))
+                File.Delete(Path.Combine(Project.Path, "build/" + Project.Name + "-unsigned.ipa"));
+
             ZipFile.CreateFromDirectory(cachedir, Path.Combine(Project.Path, "build/" + Project.Name + "-unsigned.ipa"));
             SignIpa(Path.Combine(Project.Path, "build/" + Project.Name + "-unsigned.ipa"));
         }
 
         public static void SignIpa(string path)
         {
-            Console.WriteLine("Not implemented yet; sorry !");
+            if (File.Exists(Path.Combine(Project.Path, "build/" + Project.Name + ".ipa")))
+                File.Delete(Path.Combine(Project.Path, "build/" + Project.Name + ".ipa"));
+
+            Extensions.LaunchProcess(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/helper/sign-ipa"), string.Format("-m {4} -c {3} -k {2} -o {1} {0}",
+                "'" + path + "'",
+                "'" + Path.Combine(Project.Path, "build/" + Project.Name + ".ipa'"),
+                "'" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/developer/key.pem'"),
+                "'" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/developer/certificate.pem'"),
+                "'" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/developer/provision-profile.mobileprovision'")
+            ));
         }
     }
 }

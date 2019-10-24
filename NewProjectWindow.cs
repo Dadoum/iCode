@@ -1,4 +1,5 @@
 ﻿using System;
+using Gdk;
 using Gtk;
 using UI = Gtk.Builder.ObjectAttribute;
 
@@ -9,19 +10,24 @@ namespace iCode
         Builder builder;
 
 #pragma warning disable 649
+        [UI] private Gtk.IconView iconView;
+
         [UI] private Gtk.Button button_ok;
         [UI] private Gtk.Button button_cancel;
 
         [UI] private Gtk.Entry input_name;
         [UI] private Gtk.Entry input_id;
         [UI] private Gtk.Entry input_prefix;
-#pragma warning disable 649
+        [UI] private Gtk.Entry input_path;
+#pragma warning restore 649
 
         public string ProjectName;
 
         public string Id;
 
         public string Prefix;
+
+        public string Path;
 
         public static NewProjectWindow Create()
         {
@@ -40,6 +46,7 @@ namespace iCode
                 ProjectName = input_name.Text;
                 Id = input_id.Text;
                 Prefix = input_prefix.Text;
+                Path = input_path.Text;
                 Respond(ResponseType.Ok);
                 this.Destroy();
             };
@@ -49,6 +56,19 @@ namespace iCode
                 Respond(ResponseType.Cancel);
                 this.Destroy();
             };
+
+            this.Title = "New project wizard";
+            this.iconView.SelectionMode = SelectionMode.Single;
+
+            iconView.PixbufColumn = 0;
+            iconView.TextColumn = 1;
+            
+            var store = new ListStore(typeof(Pixbuf), typeof(string));
+            store.AppendValues(Stetic.IconLoader.LoadIcon(this, "gtk-file", IconSize.Dialog), "Objective-C Project");
+            store.SetSortColumnId(2, SortType.Ascending);
+
+            iconView.Model = store;
+            iconView.ShowAll();
         }
     }
 }

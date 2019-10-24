@@ -5,9 +5,9 @@
     <target-gtk-version>3.0</target-gtk-version>
   </configuration>
   <import>
+    <widget-library name="../lib/Gdl.dll" />
+    <widget-library name="../lib/gtksourceview3-sharp.dll" />
     <widget-library name="../bin/Debug/iCode.exe" internal="true" />
-    <widget-library name="../../gtksourceview3-sharp.dll" />
-    <widget-library name="../../Gdl.dll" />
   </import>
   <widget class="Gtk.Window" id="MainWindow" design-size="867 664">
     <action-group name="Default">

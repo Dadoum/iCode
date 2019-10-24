@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using Gdl;
 using Gtk;
 
@@ -13,6 +14,7 @@ namespace iCode
 
             try
             {
+                Directory.CreateDirectory(ConfigPath);
                 Gtk.Application.Init();
                 Console.WriteLine("Initialized GTK and GDL.");
                 Program.WinInstance = new MainWindow();
@@ -26,6 +28,8 @@ namespace iCode
             }
         }
 
-		public static MainWindow WinInstance;
+        public static readonly string ConfigPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "iCode/");
+
+        public static MainWindow WinInstance;
 	}
 }

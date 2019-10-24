@@ -3,7 +3,6 @@ using Gdk;
 using Gdl;
 using Gtk;
 using iCode;
-using Mono.Unix;
 using Stetic;
 
 public partial class MainWindow : Gtk.Window
@@ -39,10 +38,10 @@ public partial class MainWindow : Gtk.Window
         try 
         { 
             CodeWidget.Initialize();
-            this.Build();
-            base.SetDefaultSize(400, 400);
+            Build();
+            SetDefaultSize(400, 400);
             Box box = new Box(Orientation.Vertical, 0);
-            this.dock = new Dock();
+            dock = new Dock();
             this.master = (DockMaster) this.dock.Master;
             this.layout = new DockLayout(this.dock);
             this.bar = new DockBar(this.dock);
@@ -77,7 +76,10 @@ public partial class MainWindow : Gtk.Window
             {
                 ProjectManager.BuildProject();
             };
-
+            this.AboutICodeAction.Activated += (sender, e) =>
+            {
+                AboutWindow.Create().ShowAll();
+            };
         }
         catch (Exception e)
         {
@@ -106,7 +108,7 @@ public partial class MainWindow : Gtk.Window
         a.RetVal = true;
     }
 
-    protected void LoadProjectActivated(object sender, EventArgs e)
+    public void LoadProjectActivated(object sender, EventArgs e)
     {
         try 
         { 
@@ -141,14 +143,15 @@ public partial class MainWindow : Gtk.Window
     private DockLayout layout;
     private DockBar bar;
 
-    protected void CreateProject(object sender, EventArgs e)
+    public void CreateProject(object sender, EventArgs e)
     {
         var dialog = NewProjectWindow.Create();
 
         if (dialog.Run() == (int) ResponseType.Ok)
         {
-            ProjectManager.CreateProject(dialog.ProjectName, dialog.Id, dialog.Prefix);
+            ProjectManager.CreateProject(dialog.ProjectName, dialog.Id, dialog.Prefix, dialog.Path);
             ProjectManager.LoadProject(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "iCode Projects/", dialog.ProjectName, "project.json"));
         }
     }
+
 }
