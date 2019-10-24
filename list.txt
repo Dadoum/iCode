@@ -1,0 +1,14 @@
+./lib/atk-sharp.dll
+./lib/cairo-sharp.dll
+./lib/gdk-sharp.dll
+./lib/Gdl.dll
+./lib/gio-sharp.dll
+./lib/glade-sharp.dll
+./lib/glib-sharp.dll
+./lib/gtk-sharp.dll
+./lib/gtksourceview3-sharp.dll
+./lib/Mono.Posix.dll
+./lib/pango-sharp.dll
+./lib/System.dll
+./lib/System.IO.Compression.dll
+./lib/System.IO.Compression.FileSystem.dll
