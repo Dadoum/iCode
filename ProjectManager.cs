@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -7,14 +8,23 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using Gtk;
+using iMobileDevice;
+using iMobileDevice.iDevice;
+using iMobileDevice.Lockdown;
 using Newtonsoft.Json.Linq;
 using Stetic;
+using Action = Gtk.Action;
 
 namespace iCode
 {
     public static class ProjectManager
     {
         public static Project Project;
+
+        private static List<Widget> SensitiveWidgets = new List<Widget>();
+        private static List<Action> SensitiveActions = new List<Action>();
+
+        private static List<RowActivatedHandler> handlers = new List<RowActivatedHandler>();
 
         private static TreeIter projectNode;
         private static TreeIter resourcesNode;
@@ -30,17 +40,33 @@ namespace iCode
             }
         }
 
+        public static void AddSensitiveObject(GLib.Object obj)
+        {
+            if (obj is Widget)
+            {
+                var widget = obj as Widget;
+                widget.Sensitive = ProjectLoaded;
+                SensitiveWidgets.Add(widget);
+            }
+            else if (obj is Action)
+            {
+                var action = obj as Action;
+                action.Sensitive = ProjectLoaded;
+                SensitiveActions.Add(action);
+            }
+        }
+
         public static void LoadProject(string file)
         {
             TreeView treeView = Program.WinInstance.ProjectExplorer.TreeView;
-            TreeStore treeStore = (TreeStore)treeView.Model;
+            TreeStore treeStore = (TreeStore)Program.WinInstance.ProjectExplorer.TreeView.Model;
             ProjectManager.Project = new Project(file);
 
             treeStore.Clear();
             
             CodeWidget.RemoveTab("Welcome to iCode !");
 
-            treeView.RowActivated += (o, args) =>
+            var e = new RowActivatedHandler((o, args) =>
             {
                 TreeIter treeIter;
                 treeStore.GetIter(out treeIter, args.Path);
@@ -72,13 +98,24 @@ namespace iCode
                 {
                     case 1:
                         var code = CodeWidget.AddCodeTab(Path.Combine(Path.GetDirectoryName(file), (string)treeStore.GetValue(treeIter, 1)));
+                        CodeWidget.codewidget.tabs.Page = CodeWidget.codewidget.tabs.PageNum(Extensions.tabs.First(x => x.Key == (string)treeStore.GetValue(treeIter, 1)).Value);
                         break;
 
                     case 2:
                         Process.Start("gio", "open '" + Path.Combine(Path.GetDirectoryName(file), "Resources", (string)treeStore.GetValue(treeIter, 1)) + "'");
                         break;
                 }
-            };
+            });
+
+            foreach (var row in handlers)
+            {
+                treeView.RowActivated -= row;
+            }
+            handlers.Clear();
+
+            treeView.RowActivated += e;
+            handlers.Add(e);
+
             projectNode = treeStore.AppendValues(new object[]
             {
                 IconLoader.LoadIcon(Program.WinInstance.ProjectExplorer, "gtk-directory", IconSize.Menu),
@@ -140,6 +177,16 @@ namespace iCode
                 filea = string.Join("\n", lines);
                 wr.Dispose();
                 re.Dispose();
+            }
+
+            foreach (var widget in SensitiveWidgets)
+            {
+                widget.Sensitive = ProjectLoaded;
+            }
+
+            foreach (var action in SensitiveActions)
+            {
+                action.Sensitive = ProjectLoaded;
             }
 
             File.WriteAllText(Path.Combine(Program.ConfigPath, "recentProjects"), filea);
@@ -233,15 +280,25 @@ namespace iCode
 
             Directory.CreateDirectory(cachedir);
             string s = "";
+
+            Program.WinInstance.ProgressBar.PulseStep = 1.0d / (double)(((double) Project.Classes.Count(c => c.Filename.EndsWith(".m", StringComparison.CurrentCulture))) + 2d);
+
             foreach (var @class in from c in Project.Classes where c.Filename.EndsWith(".m", StringComparison.CurrentCulture) select c)
             {
                 Directory.CreateDirectory(Path.Combine(cachedir, "build"));
-                Extensions.LaunchProcess("clang", @"-target '" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/target/arm64-apple-darwin14") + "' -x objective-c -c -isysroot '" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/sdk") + "' -fmodules " + string.Join(" ", @class.CompilerFlags) + "-arch arm64 '" + Path.Combine(Project.Path, @class.Filename) + "' -o '" + Path.Combine(cachedir, "build", @class.Filename + ".output") + "'");
+                var proc = Extensions.GetProcess("clang", @"-target '" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/target/arm64-apple-darwin14") + "' -x objective-c -c -isysroot '" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/sdk") + "' -fmodules " + string.Join(" ", @class.CompilerFlags) + "-arch arm64 '" + Path.Combine(Project.Path, @class.Filename) + "' -o '" + Path.Combine(cachedir, "build", @class.Filename + ".output") + "'");
+                if (!Program.WinInstance.Output.Run(proc, (int)ActionCategory.MAKE, out _, out _))
+                    return;
                 s += "'" + Path.Combine(cachedir, "build", @class.Filename + ".output") + "' ";
+                Program.WinInstance.ProgressBar.Fraction += Program.WinInstance.ProgressBar.PulseStep;
             }
 
             Directory.CreateDirectory(Path.Combine(Project.Path, ".icode/Payload/" + Project.Name + ".app/"));
-            Extensions.LaunchProcess("clang", @"-target '" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/target/arm64-apple-darwin14") + "' -framework " + string.Join(" -framework ", Project.Frameworks)  + " -isysroot '" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/sdk") + "' -arch arm64 -o '" + Path.Combine(Project.Path, ".icode/Payload/" + Project.Name + ".app/" + Project.Name) + "' " + s);
+            var process = Extensions.GetProcess("clang", @"-target '" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/target/arm64-apple-darwin14") + "' -framework " + string.Join(" -framework ", Project.Frameworks)  + " -isysroot '" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/sdk") + "' -arch arm64 -o '" + Path.Combine(Project.Path, ".icode/Payload/" + Project.Name + ".app/" + Project.Name) + "' " + s);
+            if (!Program.WinInstance.Output.Run(process, (int)ActionCategory.LINK, out _, out _))
+                return;
+
+            Program.WinInstance.ProgressBar.Fraction += Program.WinInstance.ProgressBar.PulseStep;
 
             foreach (var f in Directory.GetFiles(Path.Combine(Project.Path, "Resources"))) 
             {
@@ -262,19 +319,32 @@ namespace iCode
 
         public static void SignIpa(string path)
         {
-            if (File.Exists(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/developer/key.pem")))
+            if (!File.Exists(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/developer/key.pem")))
                 return;
 
             if (File.Exists(Path.Combine(Project.Path, "build/" + Project.Name + ".ipa")))
                 File.Delete(Path.Combine(Project.Path, "build/" + Project.Name + ".ipa"));
 
-            Extensions.LaunchProcess(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/helper/sign-ipa"), string.Format("-m {4} -c {3} -k {2} -o {1} {0}",
+            var process = Extensions.GetProcess(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/helper/sign-ipa"), string.Format("-m {4} -c {3} -k {2} -o {1} {0}",
                 "'" + path + "'",
                 "'" + Path.Combine(Project.Path, "build/" + Project.Name + ".ipa'"),
                 "'" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/developer/key.pem'"),
                 "'" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/developer/certificate.pem'"),
                 "'" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/developer/provision-profile.mobileprovision'")
             ));
+
+            Program.WinInstance.Output.Run(process, (int)ActionCategory.SIDELOAD, out _, out _);
+            Program.WinInstance.ProgressBar.Fraction += Program.WinInstance.ProgressBar.PulseStep;
+        }
+
+        public static void RunProject()
+        {
+            var win = DeviceSelectorWindow.Create();
+
+            if (win.Run() == (int) ResponseType.Ok)
+            {
+
+            }
         }
     }
 }

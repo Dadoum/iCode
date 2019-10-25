@@ -1,7 +1,9 @@
 ﻿using System;
 using System.IO;
+using System.Reflection;
 using Gdl;
 using Gtk;
+using iMobileDevice;
 
 namespace iCode
 {
@@ -17,6 +19,8 @@ namespace iCode
                 Directory.CreateDirectory(ConfigPath);
                 Gtk.Application.Init();
                 Console.WriteLine("Initialized GTK and GDL.");
+                NativeLibraries.Load(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/libs/"));
+                Console.WriteLine("Initialized libimobiledevice.");
                 Program.WinInstance = new MainWindow();
                 Program.WinInstance.ShowAll();
                 Console.WriteLine("Initialized window.");

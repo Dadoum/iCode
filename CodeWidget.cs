@@ -9,7 +9,7 @@ namespace iCode
 	public class CodeWidget : Bin
     {
         public static CodeWidget codewidget;
-        private Notebook tabs;
+        public Notebook tabs;
 
         public static void Initialize()
 		{

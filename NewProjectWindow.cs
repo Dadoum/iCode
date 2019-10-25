@@ -32,7 +32,7 @@ namespace iCode
         public static NewProjectWindow Create()
         {
             Builder builder = new Builder(null, "NewProject", null);
-            return new NewProjectWindow(builder, builder.GetObject("dialog").Handle);
+            return new NewProjectWindow(builder, builder.GetObject("NewProjectWindow").Handle);
         }
 
         protected NewProjectWindow(Builder builder, IntPtr handle) : base(handle)

@@ -1,66 +1,69 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<interface><!-- interface-requires gtk+ 3.0 --><object class="GtkWindow" id="ExceptionWindow">
-      <property name="member_name"/>
-      <property name="title" translatable="yes">ExceptionWindow</property>
-      <property name="window_position">CenterOnParent</property>
-      <child>
-         <object class="GtkBox" id="vbox1">
-            <property name="orientation">vertical</property>
-            <property name="member_name"/>
-            <property name="spacing">6</property>
-            <property name="border_width">9</property>
-            <child>
-               <object class="GtkLabel" id="ExceptionType">
-                  <property name="member_name"/>
-                  <property name="xalign">0</property>
-                  <property name="label" translatable="yes">Exception</property>
-                  <property name="use_markup">True</property>
-               </object>
-               <packing>
-                  <property name="position">0</property>
-                  <property name="auto_size">True</property>
-                  <property name="expand">False</property>
-                  <property name="fill">False</property>
-               </packing>
-            </child>
-            <child>
-               <object class="GtkLabel" id="ExceptionTitle">
-                  <property name="member_name"/>
-                  <property name="label" translatable="yes">Message</property>
-                  <property name="use_markup">True</property>
-               </object>
-               <packing>
-                  <property name="position">1</property>
-                  <property name="auto_size">True</property>
-                  <property name="expand">False</property>
-                  <property name="fill">False</property>
-               </packing>
-            </child>
-            <child>
-               <object class="GtkHSeparator" id="hseparator1">
-                  <property name="member_name"/>
-               </object>
-               <packing>
-                  <property name="position">2</property>
-                  <property name="auto_size">True</property>
-                  <property name="expand">False</property>
-                  <property name="fill">False</property>
-               </packing>
-            </child>
-            <child>
-               <object class="GtkLabel" id="ExceptionStacktrace">
-                  <property name="member_name"/>
-                  <property name="label" translatable="yes">stacktrace</property>
-                  <property name="use_markup">True</property>
-               </object>
-               <packing>
-                  <property name="position">3</property>
-                  <property name="auto_size">True</property>
-                  <property name="expand">False</property>
-                  <property name="fill">False</property>
-               </packing>
-            </child>
-         </object>
-      </child>
-   </object>
+<!-- Generated with glade 3.22.1 -->
+<interface>
+  <requires lib="gtk+" version="3.0"/>
+  <object class="GtkWindow" id="ExceptionWindow">
+    <property name="can_focus">False</property>
+    <property name="title" translatable="yes">ExceptionWindow</property>
+    <child>
+      <placeholder/>
+    </child>
+    <child>
+      <object class="GtkBox">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkLabel" id="ExceptionType">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">label</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="padding">3</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="ExceptionTitle">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">label</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="padding">3</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkSeparator">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="ExceptionStacktrace">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">jjnjh</property>
+            <property name="ellipsize">start</property>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">3</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
 </interface>

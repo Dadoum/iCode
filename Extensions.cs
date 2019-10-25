@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using Gdk;
 using Gtk;
@@ -37,6 +39,7 @@ public static class Extensions
             if (widget is CodeTabWidget)
             {
                 notebook.AppendPage(scrolledWindow, ((widget as CodeTabWidget).GetLabel()));
+
                 (widget as CodeTabWidget).GetLabel().ShowAll();
                 (widget as CodeTabWidget).GetLabel().CloseClicked += delegate (object obj, EventArgs eventArgs)
                 {
@@ -47,6 +50,7 @@ public static class Extensions
             else
             {
                 NotebookTabLabel notebookTabLabel = new NotebookTabLabel(str, widget);
+
                 notebookTabLabel.CloseClicked += delegate (object obj, EventArgs eventArgs)
                 {
                     notebook.RemovePage(notebook.PageNum(notebook.Children.First(x => x == scrolledWindow)));
@@ -60,6 +64,7 @@ public static class Extensions
             notebook.SetTabReorderable(scrolledWindow, isVolatile);
 
             widget.ShowAll();
+
         }
         catch (ArgumentException)
         {
@@ -120,6 +125,39 @@ public static class Extensions
         return IconLoader.LoadIcon(Program.WinInstance, "gtk-file", IconSize.Menu);
     }
 
+    public static void ShowMessage(Gtk.Window parent, string title, string message)
+    {
+        Dialog dialog = null;
+        try
+        {
+            dialog = new Dialog(title, parent,
+                DialogFlags.DestroyWithParent | DialogFlags.Modal,
+                ResponseType.Ok);
+            ((Box) dialog.Child).Add(new Label(message));
+            dialog.ShowAll();
+
+            dialog.Run();
+        }
+        finally
+        {
+            if (dialog != null)
+                dialog.Destroy();
+        }
+    }
+
+    public static Process GetProcess(string process, string arguments)
+    {
+        var proc = new Process();
+        proc.StartInfo.Arguments = arguments;
+        proc.StartInfo.FileName = process;
+        proc.StartInfo.UseShellExecute = false;
+        proc.StartInfo.RedirectStandardOutput = true;
+
+        proc.Start();
+        Console.WriteLine(process + " " + arguments);
+        return proc;
+    }
+
     public static string LaunchProcess(string process, string arguments)
     {
         var proc = new Process();
@@ -130,7 +168,18 @@ public static class Extensions
 
         proc.Start();
         proc.WaitForExit();
-
+        Console.WriteLine(process + " " + arguments);
         return proc.StandardOutput.ReadToEnd();
+    }
+
+    public static void RemoveEvents(TreeView b)
+    {
+        FieldInfo f1 = typeof(TreeView).GetField("EventRowActivated",
+            BindingFlags.Static | BindingFlags.NonPublic);
+        object obj = f1.GetValue(b);
+        PropertyInfo pi = b.GetType().GetProperty("Events",
+            BindingFlags.NonPublic | BindingFlags.Instance);
+        EventHandlerList list = (EventHandlerList)pi.GetValue(b, null);
+        list.RemoveHandler(obj, list[obj]);
     }
 }

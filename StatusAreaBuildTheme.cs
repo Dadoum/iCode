@@ -26,8 +26,6 @@
 using MonoDevelop.Components;
 using Cairo;
 
-using StockIcons = MonoDevelop.Ide.Gui.Stock;
-
 namespace MonoDevelop.Components.MainToolbar
 {
 	internal class StatusAreaBuildTheme : StatusAreaTheme
@@ -37,15 +35,25 @@ namespace MonoDevelop.Components.MainToolbar
 			LayoutRoundedRectangle (context, region);
 			context.Clip ();
 
-			context.SetSourceColor (CairoExtensions.ParseColor ("D3E6FF"));
+            var colora = new Color();
+            colora.A = 255;
+            colora.R = 211;
+            colora.G = 230;
+            colora.B = 255;
+
+            context.SetSourceColor (colora);
 			context.Paint ();
 
 			context.Save ();
 			context.Translate (region.X + region.Width / 2.0, region.Y + region.Height);
 
 			using (var rg = new RadialGradient (0, 0, 0, 0, 0, region.Height * 1.2)) {
-				var color = CairoExtensions.ParseColor ("E5F0FF");
-				rg.AddColorStop (0, color);
+                var color = new Color();// CairoExtensions.ParseColor ("E5F0FF");
+                color.A = 255;
+                color.R = 229;
+                color.G = 240;
+                color.B = 255;
+                rg.AddColorStop (0, color);
 				color.A = 0;
 				rg.AddColorStop (1, color);
 

@@ -37,6 +37,10 @@ namespace iCode
 			{
 				return this.treeview1;
 			}
-		}
+            set 
+            {
+                treeview1 = value;
+            }
+        }
 	}
 }

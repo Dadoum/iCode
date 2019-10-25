@@ -13,17 +13,39 @@
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <child>
-          <object class="GtkTextView" id="text">
+          <object class="GtkFixed">
             <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="editable">False</property>
-            <property name="cursor_visible">False</property>
-            <property name="accepts_tab">False</property>
+            <property name="can_focus">False</property>
+            <child>
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">&lt;b&gt;iCode version: &lt;/b&gt; v0.1-beta « Harmonica »
+&lt;b&gt;Author: &lt;/b&gt; &lt;a href="https://google.com"&gt;DadoumDev&lt;/a&gt;
+&lt;b&gt;zsign version: &lt;/b&gt; zsign built from 204c2cd commit on official github 
+
+&lt;b&gt;Licenses: &lt;/b&gt;
+iCode uses objects from the following projects:
+ - theos templates, licensed under MIT
+ - Kabiroberai's iOS toolchain for linux licensed under AGPL v3.0
+ - Apple's iOS SDK, patched with theos tool
+ - Certificate generation script for free developer accounts by LeanVel
+ - zsign by zhlynn
+ - Apple's iOS Developer images, downloaded from xushuduo mirror
+iOS, iPhone, iPad, iDevice, xcode are owned by Apple</property>
+                <property name="use_markup">True</property>
+              </object>
+              <packing>
+                <property name="x">8</property>
+                <property name="y">8</property>
+              </packing>
+            </child>
           </object>
           <packing>
             <property name="expand">True</property>
             <property name="fill">True</property>
-            <property name="position">1</property>
+            <property name="padding">5</property>
+            <property name="position">0</property>
           </packing>
         </child>
         <child>
@@ -48,13 +70,13 @@
             </child>
           </object>
           <packing>
-            <property name="expand">False</property>
+            <property name="expand">True</property>
             <property name="fill">True</property>
-            <property name="padding">5</property>
+            <property name="padding">7</property>
             <property name="position">2</property>
           </packing>
         </child>
       </object>
     </child>
-  </object> 
+  </object>
 </interface>
