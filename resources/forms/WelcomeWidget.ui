@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface><!-- interface-requires gtk+ 3.0 --><object class="GtkBox" id="WelcomeWidget">
+      <property name="member_name"/>
+      <property name="visible">False</property>
+      <child>
+         <object class="GtkBox" id="vbox1">
+            <property name="orientation">vertical</property>
+            <property name="member_name"/>
+            <property name="spacing">6</property>
+            <child>
+               <object class="GtkLabel" id="label1">
+                  <property name="member_name"/>
+                  <property name="label" translatable="yes">&lt;b&gt;Welcome to iCode&lt;/b&gt;</property>
+               </object>
+               <packing>
+                  <property name="position">0</property>
+                  <property name="auto_size">True</property>
+                  <property name="expand">False</property>
+                  <property name="fill">False</property>
+               </packing>
+            </child>
+            <child>
+               <object class="GtkHBox" id="hbox1">
+                  <property name="member_name"/>
+                  <property name="spacing">6</property>
+                  <child>
+                     <object class="GtkBox" id="vbox2">
+                        <property name="orientation">vertical</property>
+                        <property name="member_name"/>
+                        <property name="spacing">6</property>
+                        <child>
+                           <object class="GtkLabel" id="label2">
+                              <property name="member_name"/>
+                              <property name="label" translatable="yes">Recent projects</property>
+                           </object>
+                           <packing>
+                              <property name="position">0</property>
+                              <property name="auto_size">True</property>
+                              <property name="expand">False</property>
+                              <property name="fill">False</property>
+                              <property name="padding">3</property>
+                           </packing>
+                        </child>
+                        <child>
+                           <object class="GtkButton" id="button1">
+                              <property name="member_name"/>
+                              <property name="can_focus">True</property>
+                              <property name="type">TextOnly</property>
+                              <property name="label" translatable="yes">Placeholder project</property>
+                              <property name="use_underline">True</property>
+                           </object>
+                           <packing>
+                              <property name="position">1</property>
+                              <property name="auto_size">False</property>
+                           </packing>
+                        </child>
+                        <child>
+                           <object class="GtkButton" id="button2">
+                              <property name="member_name"/>
+                              <property name="can_focus">True</property>
+                              <property name="type">TextOnly</property>
+                              <property name="label" translatable="yes">Placeholder project</property>
+                              <property name="use_underline">True</property>
+                           </object>
+                           <packing>
+                              <property name="position">2</property>
+                              <property name="auto_size">False</property>
+                           </packing>
+                        </child>
+                        <child>
+                           <object class="GtkButton" id="button3">
+                              <property name="member_name"/>
+                              <property name="can_focus">True</property>
+                              <property name="type">TextOnly</property>
+                              <property name="label" translatable="yes">Placeholder project</property>
+                              <property name="use_underline">True</property>
+                           </object>
+                           <packing>
+                              <property name="position">3</property>
+                              <property name="auto_size">False</property>
+                           </packing>
+                        </child>
+                        <child>
+                           <object class="GtkButton" id="button4">
+                              <property name="member_name"/>
+                              <property name="can_focus">True</property>
+                              <property name="type">TextOnly</property>
+                              <property name="label" translatable="yes">Placeholder project</property>
+                              <property name="use_underline">True</property>
+                           </object>
+                           <packing>
+                              <property name="position">4</property>
+                              <property name="auto_size">False</property>
+                           </packing>
+                        </child>
+                        <child>
+                           <object class="GtkFixed" id="fixed3">
+                              <property name="member_name"/>
+                              <property name="has_window">False</property>
+                           </object>
+                           <packing>
+                              <property name="position">5</property>
+                              <property name="auto_size">True</property>
+                              <property name="expand">False</property>
+                              <property name="fill">False</property>
+                              <property name="padding">10</property>
+                           </packing>
+                        </child>
+                     </object>
+                     <packing>
+                        <property name="position">0</property>
+                        <property name="auto_size">False</property>
+                        <property name="padding">10</property>
+                     </packing>
+                  </child>
+                  <child>
+                     <object class="GtkBox" id="vbox3">
+                        <property name="orientation">vertical</property>
+                        <property name="member_name"/>
+                        <property name="spacing">6</property>
+                        <child>
+                           <object class="GtkFixed" id="fixed2">
+                              <property name="member_name"/>
+                              <property name="has_window">False</property>
+                           </object>
+                           <packing>
+                              <property name="position">0</property>
+                              <property name="auto_size">False</property>
+                              <property name="padding">45</property>
+                           </packing>
+                        </child>
+                        <child>
+                           <object class="GtkButton" id="button5">
+                              <property name="member_name"/>
+                              <property name="can_focus">True</property>
+                              <property name="type">TextAndIcon</property>
+                              <property name="icon">stock:gtk-new Menu</property>
+                              <property name="label" translatable="yes">Create new project</property>
+                              <property name="use_underline">True</property>
+                           </object>
+                           <packing>
+                              <property name="position">1</property>
+                              <property name="auto_size">False</property>
+                           </packing>
+                        </child>
+                        <child>
+                           <object class="GtkButton" id="button6">
+                              <property name="member_name"/>
+                              <property name="can_focus">True</property>
+                              <property name="type">TextAndIcon</property>
+                              <property name="icon">stock:gtk-open Menu</property>
+                              <property name="label" translatable="yes">Open existing project</property>
+                              <property name="use_underline">True</property>
+                           </object>
+                           <packing>
+                              <property name="position">2</property>
+                              <property name="auto_size">False</property>
+                           </packing>
+                        </child>
+                        <child>
+                           <object class="GtkFixed" id="fixed1">
+                              <property name="member_name"/>
+                              <property name="has_window">False</property>
+                           </object>
+                           <packing>
+                              <property name="position">3</property>
+                              <property name="auto_size">False</property>
+                              <property name="padding">45</property>
+                           </packing>
+                        </child>
+                     </object>
+                     <packing>
+                        <property name="position">1</property>
+                        <property name="auto_size">False</property>
+                        <property name="padding">10</property>
+                     </packing>
+                  </child>
+               </object>
+               <packing>
+                  <property name="position">1</property>
+                  <property name="auto_size">False</property>
+               </packing>
+            </child>
+         </object>
+      </child>
+   </object>
+</interface>
