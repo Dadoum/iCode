@@ -1,4 +1,7 @@
 ﻿using System;
+using System.IO;
+using System.Linq;
+using System.Reflection;
 using Gdk;
 using Gtk;
 using UI = Gtk.Builder.ObjectAttribute;
@@ -29,6 +32,8 @@ namespace iCode
 
         public new string Path;
 
+        public string SelectedTemplatePath;
+
         public static NewProjectWindow Create()
         {
             Builder builder = new Builder(null, "NewProject", null);
@@ -44,9 +49,21 @@ namespace iCode
             button_ok.Clicked += (sender, e) =>
             {
                 ProjectName = input_name.Text;
+
                 Id = input_id.Text;
+
                 Prefix = input_prefix.Text;
+
                 Path = input_path.Text;
+
+                if (iconView.SelectedItems.Length == 0)
+                    return;
+
+                ((ListStore)iconView.Model).GetIter(out TreeIter temp, iconView.SelectedItems.FirstOrDefault());
+
+                Console.WriteLine(iconView.PathIsSelected(((ListStore)iconView.Model).GetPath(temp)).ToString());
+                SelectedTemplatePath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/templates/" + ((string) ((ListStore)iconView.Model).GetValue(temp, 1)) + ".zip");
+                Console.WriteLine(SelectedTemplatePath);
                 Respond(ResponseType.Ok);
                 this.Destroy();
             };
@@ -64,7 +81,14 @@ namespace iCode
             iconView.TextColumn = 1;
             
             var store = new ListStore(typeof(Pixbuf), typeof(string));
-            store.AppendValues(Stetic.IconLoader.LoadIcon(this, "gtk-file", IconSize.Dialog), "Objective-C Project");
+
+            iconView.SelectionMode = SelectionMode.Single;
+
+            foreach (var file in from f in Directory.GetFiles(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/templates/")) where f.EndsWith(".zip", StringComparison.CurrentCultureIgnoreCase) select f)
+            {
+                store.AppendValues(Stetic.IconLoader.LoadIcon(this, "gtk-file", IconSize.Dialog), System.IO.Path.GetFileNameWithoutExtension(file));
+            }
+
             store.SetSortColumnId(2, SortType.Ascending);
 
             iconView.Model = store;

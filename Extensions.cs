@@ -125,24 +125,12 @@ public static class Extensions
         return IconLoader.LoadIcon(Program.WinInstance, "gtk-file", IconSize.Menu);
     }
 
-    public static void ShowMessage(Gtk.Window parent, string title, string message)
+    public static void ShowMessage(MessageType type, string title, string message, Gtk.Window parent = null)
     {
-        Dialog dialog = null;
-        try
-        {
-            dialog = new Dialog(title, parent,
-                DialogFlags.DestroyWithParent | DialogFlags.Modal,
-                ResponseType.Ok);
-            ((Box) dialog.Child).Add(new Label(message));
-            dialog.ShowAll();
-
-            dialog.Run();
-        }
-        finally
-        {
-            if (dialog != null)
-                dialog.Destroy();
-        }
+        MessageDialog md = new MessageDialog(parent, DialogFlags.DestroyWithParent, type, ButtonsType.Ok, true, message);
+        md.Title = title;
+        md.Run();
+        md.Destroy();
     }
 
     public static Process GetProcess(string process, string arguments)
@@ -168,7 +156,6 @@ public static class Extensions
 
         proc.Start();
         proc.WaitForExit();
-        Console.WriteLine(process + " " + arguments);
         return proc.StandardOutput.ReadToEnd();
     }
 
@@ -181,5 +168,19 @@ public static class Extensions
             BindingFlags.NonPublic | BindingFlags.Instance);
         EventHandlerList list = (EventHandlerList)pi.GetValue(b, null);
         list.RemoveHandler(obj, list[obj]);
+    }
+
+    public static byte[] ReadFully(this Stream input)
+    {
+        byte[] buffer = new byte[16 * 1024];
+        using (MemoryStream ms = new MemoryStream())
+        {
+            int read;
+            while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
+            {
+                ms.Write(buffer, 0, read);
+            }
+            return ms.ToArray();
+        }
     }
 }

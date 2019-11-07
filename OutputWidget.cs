@@ -26,61 +26,96 @@ namespace iCode
             builder.Autoconnect(this);
 
             output.Buffer = new Gtk.TextBuffer(new Gtk.TextTagTable());
+            output.SizeAllocated += (o, args) =>
+            {
+                this.Vadjustment.Value = this.Vadjustment.Upper - this.Vadjustment.PageSize;
+            };
         }
 
-        public bool Run(Process p, int action, out string error, out string outp)
+        public int Run(Process p, int action, out string error, out string outp)
         {
             if (action == (int)ActionCategory.MAKE && action != lastAction)
-                output.Buffer.Text = "";
+                Gtk.Application.Invoke((a, b) =>
+                {
+                    output.Buffer.Text = "";
+                });
 
             switch ((ActionCategory) action)
             {
                 case ActionCategory.MAKE:
                     if (action != lastAction)
-                        output.Buffer.Text += "=========== MAKE ==========\n";
+                        Gtk.Application.Invoke((a, b) =>
+                        {
+                            output.Buffer.Text += "=========== MAKE ==========\n";
+                        });
                     break;
 
                 case ActionCategory.LINK:
                     if (action != lastAction)
-                        output.Buffer.Text += "=========== LINK ==========\n";
+                        Gtk.Application.Invoke((a, b) =>
+                        {
+                            output.Buffer.Text += "=========== LINK ==========\n";
+                        });
                     break;
 
                 case ActionCategory.ENROLL:
                     if (action != lastAction)
-                        output.Buffer.Text += "========== ENROLL =========\n";
+                        Gtk.Application.Invoke((a, b) =>
+                        {
+                            output.Buffer.Text += "========== ENROLL =========\n";
+                        });
                     break;
 
                 case ActionCategory.SIDELOAD:
                     if (action != lastAction)
-                        output.Buffer.Text += "========= SIDELOAD ========\n";
+                        Gtk.Application.Invoke((a, b) =>
+                        {
+                            output.Buffer.Text += "========= SIDELOAD ========\n";
+                        });
                     break;
 
                 case ActionCategory.LAUNCH:
                     if (action != lastAction)
-                        output.Buffer.Text += "========== LAUNCH =========\n";
+                        Gtk.Application.Invoke((a, b) =>
+                        {
+                            output.Buffer.Text += "========== LAUNCH =========\n";
+                        });
                     break;
             }
 
             lastAction = action;
-
-            output.Buffer.Text += "-> '" + p.StartInfo.FileName + "' " + p.StartInfo.Arguments + "\n";
+            Gtk.Application.Invoke((a, b) =>
+            {
+                output.Buffer.Text += "-> '" + p.StartInfo.FileName + "' " + p.StartInfo.Arguments + "\n";
+            });
 
             p.StartInfo.UseShellExecute = false;
             p.StartInfo.RedirectStandardError = p.StartInfo.RedirectStandardOutput = true;
             p.Start();
-            p.WaitForExit();
+
+            while (!p.StandardOutput.EndOfStream)
+            {
+                string line = p.StandardOutput.ReadLine();
+
+                Gtk.Application.Invoke((sender, e) =>
+                {
+                    output.Buffer.Text += line + "\n";
+                });
+            }
 
             outp = p.StandardOutput.ReadToEnd();
             error = p.StandardError.ReadToEnd();
 
-            output.Buffer.Text += outp + "\n";
-            output.Buffer.Text += p.StartInfo.FileName + " exited with the code " + p.ExitCode + "\n\n";
+            p.WaitForExit();
 
-            if (p.ExitCode == 0)
-                return true;
-            else
-                return false;
+            Gtk.Application.Invoke((sender, e) =>
+            {
+                output.Buffer.Text += p.StartInfo.FileName + " exited with the code " + p.ExitCode + "\n\n";
+            });
+
+            return p.ExitCode;
         }
+
     }
 
     public enum ActionCategory

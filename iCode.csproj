@@ -9,7 +9,7 @@
     <RootNamespace>iCode</RootNamespace>
     <AssemblyName>iCode</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
-    <DisableFody Condition="'$(Configuration)' == 'Debug'">true</DisableFody>
+    <!-- DisableFody Condition="'$(Configuration)' == 'Debug'">true</DisableFody -->
   </PropertyGroup>
   <PropertyGroup>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -68,10 +68,6 @@
           <command>tar -czvf iCode.tar.gz iCode.exe tools/</command>
           <workingdir>${TargetDir}</workingdir>
         </Command>
-        <Command>
-          <type>BeforeBuild</type>
-          <command>xcopy /E ${ProjectDir}/tools/ ${TargetDir}/tools</command>
-        </Command>
       </CustomCommands>
     </CustomCommands>
   </PropertyGroup>
@@ -90,25 +86,39 @@
     </Reference>
     <Reference Include="gtk-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
       <Package>gtk-sharp-3.0</Package>
+      <SpecificVersion>False</SpecificVersion>
+      <IncludeInPackage>false</IncludeInPackage>
     </Reference>
     <Reference Include="glib-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
       <Package>glib-sharp-3.0</Package>
+      <SpecificVersion>False</SpecificVersion>
+      <IncludeInPackage>false</IncludeInPackage>
     </Reference>
     <Reference Include="gdk-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
       <Package>gdk-sharp-3.0</Package>
+      <IncludeInPackage>false</IncludeInPackage>
+      <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="gio-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
       <Package>gio-sharp-3.0</Package>
+      <SpecificVersion>False</SpecificVersion>
+      <IncludeInPackage>false</IncludeInPackage>
     </Reference>
     <Reference Include="cairo-sharp, Version=1.10.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756">
       <Package>gtk-sharp-3.0</Package>
+      <SpecificVersion>False</SpecificVersion>
+      <IncludeInPackage>false</IncludeInPackage>
     </Reference>
     <Reference Include="atk-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
       <Package>gtk-sharp-3.0</Package>
+      <SpecificVersion>False</SpecificVersion>
+      <IncludeInPackage>false</IncludeInPackage>
     </Reference>
     <Reference Include="Mono.Posix" />
     <Reference Include="pango-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
       <Package>gtk-sharp-3.0</Package>
+      <SpecificVersion>False</SpecificVersion>
+      <IncludeInPackage>false</IncludeInPackage>
     </Reference>
     <Reference Include="System.Xaml" />
     <Reference Include="System" />
@@ -119,6 +129,8 @@
     </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="resources\images\icon.png" />
@@ -187,8 +199,8 @@
     <Compile Include="OutputWidget.cs">
       <LogicalName>iCode.OutputWidget.cs</LogicalName>
     </Compile>
-    <Compile Include="DeviceStruct.cs" />
     <Compile Include="DeviceSelectorWindow.cs" />
+    <Compile Include="PList.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

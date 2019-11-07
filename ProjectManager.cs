@@ -6,11 +6,16 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Gtk;
 using iMobileDevice;
 using iMobileDevice.iDevice;
 using iMobileDevice.Lockdown;
+using iMobileDevice.MobileImageMounter;
+using iMobileDevice.Plist;
 using Newtonsoft.Json.Linq;
 using Stetic;
 using Action = Gtk.Action;
@@ -192,10 +197,12 @@ namespace iCode
             File.WriteAllText(Path.Combine(Program.ConfigPath, "recentProjects"), filea);
         }
 
-        public static Project CreateProject(string name, string id, string prefix, string path = null)
+        public static Project CreateProject(string name, string id, string prefix, string zip, string path = null)
         {
             if (string.IsNullOrWhiteSpace(path))
                 path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "iCode Projects/", name);
+
+            Console.WriteLine("Extracting template from: {0}", zip);
 
             var Frameworks = new List<string>();
             var Classes = new List<Class>();
@@ -209,30 +216,17 @@ namespace iCode
             Frameworks.Add("Foundation");
             Frameworks.Add("UIKit");
 
-            var mainStruct = new JObject();
-            mainStruct.Add("flags", JArray.FromObject(new string[] { }));
-            mainStruct.Add("filename", "main.m");
-            Classes.Add(new Class(mainStruct));
+            ZipFile.ExtractToDirectory(zip, path);
 
-            var viewStruct = new JObject();
-            viewStruct.Add("flags", JArray.FromObject(new string[] { }));
-            viewStruct.Add("filename", prefix + "RootViewController.m");
-            Classes.Add(new Class(viewStruct));
+            FormatFiles(path, name, prefix, id);
 
-            var delegateStruct = new JObject();
-            delegateStruct.Add("flags", JArray.FromObject(new string[] { }));
-            delegateStruct.Add("filename", prefix + "AppDelegate.m");
-            Classes.Add(new Class(delegateStruct));
-
-            var viewhStruct = new JObject();
-            viewhStruct.Add("flags", JArray.FromObject(new string[] { }));
-            viewhStruct.Add("filename", prefix + "RootViewController.h");
-            Classes.Add(new Class(viewhStruct));
-
-            var delegatehStruct = new JObject();
-            delegatehStruct.Add("flags", JArray.FromObject(new string[] { }));
-            delegatehStruct.Add("filename", prefix + "AppDelegate.h");
-            Classes.Add(new Class(delegatehStruct));
+            foreach (var file in from f in Directory.GetFiles(path) where f.EndsWith(".m", StringComparison.CurrentCulture) || f.EndsWith(".h", StringComparison.CurrentCulture) || f.EndsWith(".swift", StringComparison.CurrentCulture) select f)
+            {
+                var a = new JObject();
+                a.Add("flags", JArray.FromObject(new string[] { }));
+                a.Add("filename", Path.GetFileName(file));
+                Classes.Add(new Class(a));
+            }
 
             Attributes.Add("name", name);
             Attributes.Add("package", id);
@@ -246,32 +240,30 @@ namespace iCode
 
             Attributes.Add("classes", classStruct);
 
-            string temp = Path.GetTempFileName();
-            var template = Assembly.GetExecutingAssembly().GetManifestResourceStream("objc-template").ToByteArray();
-            File.WriteAllBytes(temp, template);
-
-            ZipFile.ExtractToDirectory(temp, path);
-            File.Move(Path.Combine(path, "AppDelegate.m"), Path.Combine(path, prefix + "AppDelegate.m"));
-            File.WriteAllText(Path.Combine(path, prefix + "AppDelegate.m"), File.ReadAllText(Path.Combine(path, prefix + "AppDelegate.m")).Replace("@@CLASSPREFIX@@", prefix));
-
-            File.Move(Path.Combine(path, "AppDelegate.h"), Path.Combine(path, prefix + "AppDelegate.h"));
-            File.WriteAllText(Path.Combine(path, prefix + "AppDelegate.h"), File.ReadAllText(Path.Combine(path, prefix + "AppDelegate.h")).Replace("@@CLASSPREFIX@@", prefix));
-
-            File.Move(Path.Combine(path, "RootViewController.m"), Path.Combine(path, prefix + "RootViewController.m"));
-            File.WriteAllText(Path.Combine(path, prefix + "RootViewController.m"), File.ReadAllText(Path.Combine(path, prefix + "RootViewController.m")).Replace("@@CLASSPREFIX@@", prefix));
-
-            File.Move(Path.Combine(path, "RootViewController.h"), Path.Combine(path, prefix + "RootViewController.h"));
-            File.WriteAllText(Path.Combine(path, prefix + "RootViewController.h"), File.ReadAllText(Path.Combine(path, prefix + "RootViewController.h")).Replace("@@CLASSPREFIX@@", prefix));
-
-            File.WriteAllText(Path.Combine(path, "main.m"), File.ReadAllText(Path.Combine(path, "main.m")).Replace("@@CLASSPREFIX@@", prefix));
-
-            File.WriteAllText(Path.Combine(path, "Resources/Info.plist"), File.ReadAllText(Path.Combine(path, "Resources/Info.plist")).Replace("@@CLASSPREFIX@@", prefix).Replace("@@PROJECTNAME@@", name).Replace("@@PACKAGENAME@@", id));
-
             File.WriteAllText(Path.Combine(path, "project.json"), Attributes.ToString());
             return new Project(Path.Combine(path, "project.json"));
         }
 
-        public static void BuildProject()
+        private static void FormatFiles(string path, string name, string prefix, string package)
+        {
+            foreach (var d in from d in Directory.GetDirectories(path) where !d.StartsWith(".", StringComparison.CurrentCulture) select d)
+                FormatFiles(d, name, prefix, package);
+
+
+            foreach (var f in Directory.GetFiles(path))
+            {
+                var file = f;
+                if (f.EndsWith(".m", StringComparison.CurrentCulture) || f.EndsWith(".h", StringComparison.CurrentCulture))
+                {
+                    File.Move(f, Path.Combine(path, prefix + Path.GetFileName(f)));
+                    file = Path.Combine(path, prefix + Path.GetFileName(f));
+                }
+
+                File.WriteAllText(file, File.ReadAllText(file).Replace("@@CLASSPREFIX@@", prefix).Replace("@@PROJECTNAME@@", name).Replace("@@PACKAGENAME@@", package));
+            }
+        }
+
+        public static bool BuildProject()
         {
             var cachedir = Path.Combine(Project.Path, ".icode");
 
@@ -283,20 +275,23 @@ namespace iCode
 
             Program.WinInstance.ProgressBar.PulseStep = 1.0d / (double)(((double) Project.Classes.Count(c => c.Filename.EndsWith(".m", StringComparison.CurrentCulture))) + 2d);
 
-            foreach (var @class in from c in Project.Classes where c.Filename.EndsWith(".m", StringComparison.CurrentCulture) select c)
+            if (Project.Classes.Any((arg) => arg.Filename.EndsWith(".swift", StringComparison.CurrentCultureIgnoreCase)))
+                Extensions.ShowMessage(MessageType.Error, "Cannot build.", "Swift is not supported for the moment.");
+
+            foreach (var @class in from c in Project.Classes where !c.Filename.EndsWith(".h", StringComparison.CurrentCultureIgnoreCase) select c)
             {
                 Directory.CreateDirectory(Path.Combine(cachedir, "build"));
                 var proc = Extensions.GetProcess("clang", @"-target '" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/target/arm64-apple-darwin14") + "' -x objective-c -c -isysroot '" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/sdk") + "' -fmodules " + string.Join(" ", @class.CompilerFlags) + "-arch arm64 '" + Path.Combine(Project.Path, @class.Filename) + "' -o '" + Path.Combine(cachedir, "build", @class.Filename + ".output") + "'");
-                if (!Program.WinInstance.Output.Run(proc, (int)ActionCategory.MAKE, out _, out _))
-                    return;
+                if (!(Program.WinInstance.Output.Run(proc, (int)ActionCategory.MAKE, out _, out _) == 0))
+                    return false;
                 s += "'" + Path.Combine(cachedir, "build", @class.Filename + ".output") + "' ";
                 Program.WinInstance.ProgressBar.Fraction += Program.WinInstance.ProgressBar.PulseStep;
             }
 
             Directory.CreateDirectory(Path.Combine(Project.Path, ".icode/Payload/" + Project.Name + ".app/"));
             var process = Extensions.GetProcess("clang", @"-target '" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/target/arm64-apple-darwin14") + "' -framework " + string.Join(" -framework ", Project.Frameworks)  + " -isysroot '" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/sdk") + "' -arch arm64 -o '" + Path.Combine(Project.Path, ".icode/Payload/" + Project.Name + ".app/" + Project.Name) + "' " + s);
-            if (!Program.WinInstance.Output.Run(process, (int)ActionCategory.LINK, out _, out _))
-                return;
+            if (!(Program.WinInstance.Output.Run(process, (int)ActionCategory.LINK, out _, out _) == 0))
+                return false;
 
             Program.WinInstance.ProgressBar.Fraction += Program.WinInstance.ProgressBar.PulseStep;
 
@@ -314,14 +309,16 @@ namespace iCode
                 File.Delete(Path.Combine(Project.Path, "build/" + Project.Name + "-unsigned.ipa"));
 
             ZipFile.CreateFromDirectory(cachedir, Path.Combine(Project.Path, "build/" + Project.Name + "-unsigned.ipa"));
-            SignIpa(Path.Combine(Project.Path, "build/" + Project.Name + "-unsigned.ipa"));
+            return SignIpa(Path.Combine(Project.Path, "build/" + Project.Name + "-unsigned.ipa"));
         }
 
-        public static void SignIpa(string path)
+        public static bool SignIpa(string path)
         {
             if (!File.Exists(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/developer/key.pem")))
-                return;
-
+            {
+                Extensions.ShowMessage(MessageType.Error, "Cannot codesign application", "No certificate found in ./tools/developer/.\nRead README for information about how to place them,\n and run ./tools/helper/gen-certs to generate certificates.\n The syntax is:\ngen-certs apple-id app-only-password device-udid \nNote: the device udid i can be automatically retrieved\n if your device is connected to the computer and\n if you trusted the computer.");
+                return false;
+            }
             if (File.Exists(Path.Combine(Project.Path, "build/" + Project.Name + ".ipa")))
                 File.Delete(Path.Combine(Project.Path, "build/" + Project.Name + ".ipa"));
 
@@ -333,8 +330,10 @@ namespace iCode
                 "'" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/developer/provision-profile.mobileprovision'")
             ));
 
-            Program.WinInstance.Output.Run(process, (int)ActionCategory.SIDELOAD, out _, out _);
+            int i = Program.WinInstance.Output.Run(process, (int)ActionCategory.SIDELOAD, out _, out _);
             Program.WinInstance.ProgressBar.Fraction += Program.WinInstance.ProgressBar.PulseStep;
+
+            return i == 0;
         }
 
         public static void RunProject()
@@ -343,8 +342,86 @@ namespace iCode
 
             if (win.Run() == (int) ResponseType.Ok)
             {
+                JObject jobj = PList.ParsePList(new PList(win.attributesPlist));
 
+                /* Can't get this code working.
+                 * Will use temporarily the command ideviceimagemounter
+                var iDevice = LibiMobileDevice.Instance.iDevice;
+                var Lockdown = LibiMobileDevice.Instance.Lockdown;
+                var ImageMounter = LibiMobileDevice.Instance.MobileImageMounter;
+                var Plist = LibiMobileDevice.Instance.Plist;
+
+                iDeviceHandle deviceHandle;
+                iDevice.idevice_new(out deviceHandle, jobj["UniqueDeviceID"].ToString()).ThrowOnError();
+
+                LockdownClientHandle lockdownHandle;
+                Lockdown.lockdownd_client_new_with_handshake(deviceHandle, out lockdownHandle, "iCode").ThrowOnError();
+
+                LockdownServiceDescriptorHandle lockdownServiceHandle;
+                Lockdown.lockdownd_start_service(lockdownHandle, "com.apple.mobile.mobile_image_mounter", out lockdownServiceHandle).ThrowOnError();
+
+                MobileImageMounterClientHandle mounterHandle;
+                ImageMounter.mobile_image_mounter_new(deviceHandle, lockdownServiceHandle, out mounterHandle).ThrowOnError();
+
+                string s = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/dmgs/" + jobj["BuildVersion"].ToString() + "/DeveloperDiskImage.dmg.signature");
+
+                var b = File.Open(s, FileMode.Open, FileAccess.Read);
+                var str = b.ReadFully();
+                var b_length = new System.IO.FileInfo(s).Length;
+                var file = File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/dmgs/" + jobj["BuildVersion"].ToString() + "/DeveloperDiskImage.dmg"));
+                GCHandle pinnedArray = GCHandle.Alloc(file, GCHandleType.Pinned);
+                IntPtr pointer = pinnedArray.AddrOfPinnedObject();
+
+                ImageMounter.mobile_image_mounter_upload_image(mounterHandle, "Developer", (ushort) file.Length, str, (ushort) str.Length, (buffer, length, userData) => { return (int) length; }, pointer).ThrowOnError();
+
+                PlistHandle plist;
+                ImageMounter.mobile_image_mounter_mount_image(mounterHandle, "/private/var/mobile/Media/PublicStaging/staging.dimage", str, (ushort) str.Length, "Developer", out plist).ThrowOnError();
+
+                uint a = 20;
+                string xml;
+                Plist.plist_to_xml(plist, out xml, ref a);
+
+                JObject result = PList.ParsePList(new PList(xml));
+                Console.WriteLine(result.ToString());
+
+
+                b.Close();
+                deviceHandle.Dispose();
+                lockdownHandle.Dispose();
+                lockdownServiceHandle.Dispose();
+                mounterHandle.Dispose();
+                pinnedArray.Free();
+                plist.Dispose();*/
+                if (BuildProject())
+                {
+                    Task.Factory.StartNew(() =>
+                    {
+                        try
+                        {
+                            Console.WriteLine("Impact with libimobiledevice");
+                            var file = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/dmgs/" + jobj["BuildVersion"].ToString() + "/DeveloperDiskImage.dmg");
+                            var file_sig = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/dmgs/" + jobj["BuildVersion"].ToString() + "/DeveloperDiskImage.dmg.signature");
+                            Console.WriteLine("Impact with libimobiledevice5");
+                            Program.WinInstance.Output.Run(Extensions.GetProcess("ideviceinstaller", "-U '" + Path.Combine(Project.Path, "build/" + Project.Name + ".ipa") + "'"), (int)ActionCategory.SIDELOAD, out _, out _);
+                            Thread.Sleep(500);
+                            Console.WriteLine("Impact with libimobiledevice4");
+                            Program.WinInstance.Output.Run(Extensions.GetProcess("ideviceinstaller", "-i '" + Path.Combine(Project.Path, "build/" + Project.Name + ".ipa") + "'"), (int)ActionCategory.SIDELOAD, out _, out _);
+                            Thread.Sleep(500);
+                            Console.WriteLine("Impact with libimobiledevice3");
+                            Program.WinInstance.Output.Run(Extensions.GetProcess("ideviceimagemounter", "'" + file + "' '" + file_sig + "'"), (int)ActionCategory.LAUNCH, out _, out _);
+                            Thread.Sleep(500);
+                            Console.WriteLine("Impact with libimobiledevice2");
+                            Program.WinInstance.Output.Run(Extensions.GetProcess("idevicedebug", "run " + Project.BundleId), (int)ActionCategory.LAUNCH, out _, out _);
+                            Console.WriteLine("Impact with libimobiledevice ! ");
+                        }
+                        catch (Exception e)
+                        {
+                            new ExceptionWindow(e, null);
+                        }
+                    });
+                }
             }
         }
+
     }
 }

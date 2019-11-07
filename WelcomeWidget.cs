@@ -87,7 +87,7 @@ namespace iCode
 
             if (dialog.Run() == (int)ResponseType.Ok)
             {
-                ProjectManager.CreateProject(dialog.ProjectName, dialog.Id, dialog.Prefix);
+                ProjectManager.CreateProject(dialog.ProjectName, dialog.Id, dialog.Prefix, dialog.SelectedTemplatePath);
                 ProjectManager.LoadProject(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "iCode Projects/", dialog.ProjectName, "project.json"));
             }
         }

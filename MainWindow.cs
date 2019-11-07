@@ -109,7 +109,8 @@ public partial class MainWindow : Gtk.Window
            
             ProjectManager.AddSensitiveObject(BuildProjectAction);
             ProjectManager.AddSensitiveObject(button6);
-            button6.Label = "▶";
+            ((Label) button6.Children[0]).UseMarkup = true;
+            ((Label)button6.Children[0]).Markup = "Run \u00A0 <span foreground=\"green\">▶</span>";
             button6.StyleContext.AddClass("circular");
 
             this.button6.Clicked += (sender, e) => 
@@ -188,7 +189,7 @@ public partial class MainWindow : Gtk.Window
 
         if (dialog.Run() == (int) ResponseType.Ok)
         {
-            ProjectManager.CreateProject(dialog.ProjectName, dialog.Id, dialog.Prefix, dialog.Path);
+            ProjectManager.CreateProject(dialog.ProjectName, dialog.Id, dialog.Prefix, dialog.SelectedTemplatePath, dialog.Path);
             ProjectManager.LoadProject(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "iCode Projects/", dialog.ProjectName, "project.json"));
         }
     }
