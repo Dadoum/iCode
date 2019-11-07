@@ -31,8 +31,14 @@ steps:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
 
+- task: CopyFiles@2
+  inputs:
+    SourceFolder: '$(Pipeline.Workspace)/s/tools'
+    Contents: '**'
+    TargetFolder: '$(Pipeline.Workspace)/s/bin/Release/tools'
+
 - task: PublishPipelineArtifact@1
   inputs:
-    targetPath: '$(Pipeline.Workspace)/s'
+    targetPath: '$(Pipeline.Workspace)/s/bin/Release'
     artifact: 'iCode-nightly'
     publishLocation: 'pipeline'
