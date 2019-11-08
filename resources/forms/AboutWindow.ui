@@ -17,10 +17,10 @@
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <child>
-              <object class="GtkLabel">
+              <object class="GtkLabel" id="label">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">&lt;b&gt;iCode version: &lt;/b&gt; v0.1-beta « Harmonica »
+                <property name="label" translatable="yes">&lt;b&gt;iCode version: &lt;/b&gt; VERSIONNUMBER
 &lt;b&gt;Author: &lt;/b&gt; &lt;a href="https://google.com"&gt;DadoumDev&lt;/a&gt;
 &lt;b&gt;zsign version: &lt;/b&gt; zsign built from 204c2cd commit on official github 
 
