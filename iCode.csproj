@@ -131,6 +131,9 @@
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
+    <Reference Include="MSBuild.AssemblyVersion">
+      <HintPath>packages\MSBuild.AssemblyVersion.1.2.0\lib\net452\MSBuild.AssemblyVersion.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="resources\images\icon.png" />
@@ -5117,4 +5120,5 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="packages\Fody.6.0.0\build\Fody.targets" Condition="Exists('packages\Fody.6.0.0\build\Fody.targets')" />
   <Import Project="packages\iMobileDevice-net.1.2.146\build\net45\iMobileDevice-net.targets" Condition="Exists('packages\iMobileDevice-net.1.2.146\build\net45\iMobileDevice-net.targets')" />
+  <Import Project="packages\MSBuild.AssemblyVersion.1.2.0\build\MSBuild.AssemblyVersion.targets" Condition="Exists('packages\MSBuild.AssemblyVersion.1.2.0\build\MSBuild.AssemblyVersion.targets')" />
 </Project>
