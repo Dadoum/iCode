@@ -5,6 +5,8 @@
 trigger:
 - master
 
+name: '$(Date:yyyy.MM.dd)$(Rev:.r)'
+
 pool:
   vmImage: 'windows-latest'
 
@@ -22,6 +24,7 @@ steps:
 
 - task: VSBuild@1
   inputs:
+    msbuildArgs: '/p:AssemblyVersion=$(BuildNumber)'
     solution: '$(solution)'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
@@ -40,5 +43,5 @@ steps:
 - task: PublishPipelineArtifact@1
   inputs:
     targetPath: '$(Pipeline.Workspace)/s/bin/Release'
-    artifact: 'iCode-nightly'
+    artifact: 'iCode'
     publishLocation: 'pipeline'
