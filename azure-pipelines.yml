@@ -24,7 +24,7 @@ steps:
 
 - task: VSBuild@1
   inputs:
-    msbuildArgs: '/p:AssemblyVersion=$(BuildNumber)'
+    msbuildArgs: '/p:AssemblyVersion=''$(Date:yyyy.MM.dd)$(Rev:.r)'
     solution: '$(solution)'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
@@ -40,8 +40,16 @@ steps:
     Contents: '**'
     TargetFolder: '$(Pipeline.Workspace)/s/bin/Release/tools'
 
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: '$(Pipeline.Workspace)/s/bin/Release/'
+    includeRootFolder: false
+    archiveType: 'tar'
+    archiveFile: '$(Pipeline.Workspace)/s/artifact.tar.gz'
+    replaceExistingArchive: true
+
 - task: PublishPipelineArtifact@1
   inputs:
-    targetPath: '$(Pipeline.Workspace)/s/bin/Release'
+    targetPath: '$(Pipeline.Workspace)/s/artifact.tar.gz'
     artifact: 'iCode'
     publishLocation: 'pipeline'
