@@ -398,21 +398,15 @@ namespace iCode
                     {
                         try
                         {
-                            Console.WriteLine("Impact with libimobiledevice");
                             var file = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/dmgs/" + jobj["BuildVersion"].ToString() + "/DeveloperDiskImage.dmg");
                             var file_sig = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/dmgs/" + jobj["BuildVersion"].ToString() + "/DeveloperDiskImage.dmg.signature");
-                            Console.WriteLine("Impact with libimobiledevice5");
                             Program.WinInstance.Output.Run(Extensions.GetProcess("ideviceinstaller", "-U '" + Path.Combine(Project.Path, "build/" + Project.Name + ".ipa") + "'"), (int)ActionCategory.SIDELOAD, out _, out _);
                             Thread.Sleep(500);
-                            Console.WriteLine("Impact with libimobiledevice4");
                             Program.WinInstance.Output.Run(Extensions.GetProcess("ideviceinstaller", "-i '" + Path.Combine(Project.Path, "build/" + Project.Name + ".ipa") + "'"), (int)ActionCategory.SIDELOAD, out _, out _);
                             Thread.Sleep(500);
-                            Console.WriteLine("Impact with libimobiledevice3");
                             Program.WinInstance.Output.Run(Extensions.GetProcess("ideviceimagemounter", "'" + file + "' '" + file_sig + "'"), (int)ActionCategory.LAUNCH, out _, out _);
                             Thread.Sleep(500);
-                            Console.WriteLine("Impact with libimobiledevice2");
                             Program.WinInstance.Output.Run(Extensions.GetProcess("idevicedebug", "run " + Project.BundleId), (int)ActionCategory.LAUNCH, out _, out _);
-                            Console.WriteLine("Impact with libimobiledevice ! ");
                         }
                         catch (Exception e)
                         {
