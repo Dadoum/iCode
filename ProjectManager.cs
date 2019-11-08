@@ -410,7 +410,7 @@ namespace iCode
                         }
                         catch (Exception e)
                         {
-                            new ExceptionWindow(e, null);
+                            _ = new ExceptionWindow(e, null);
                         }
                     });
                 }
