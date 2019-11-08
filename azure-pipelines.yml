@@ -45,11 +45,11 @@ steps:
     rootFolderOrFile: '$(Pipeline.Workspace)/s/bin/Release/'
     includeRootFolder: false
     archiveType: 'tar'
-    archiveFile: '$(Pipeline.Workspace)/s/artifact.tar.gz'
+    archiveFile: '$(Pipeline.Workspace)/s/iCode.tar.gz'
     replaceExistingArchive: true
 
 - task: PublishPipelineArtifact@1
   inputs:
-    targetPath: '$(Pipeline.Workspace)/s/artifact.tar.gz'
+    targetPath: '$(Pipeline.Workspace)/s/iCode.tar.gz'
     artifact: 'iCode'
     publishLocation: 'pipeline'
