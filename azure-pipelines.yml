@@ -5,6 +5,8 @@
 trigger:
 - master
 
+name: '$(Date:yyyy.MM.dd)-$(Rev:.r)'
+
 pool:
   vmImage: 'windows-latest'
 
@@ -22,6 +24,7 @@ steps:
 
 - task: VSBuild@1
   inputs:
+    msbuildArgs: ''
     solution: '$(solution)'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
