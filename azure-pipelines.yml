@@ -24,7 +24,7 @@ steps:
 
 - task: VSBuild@1
   inputs:
-    msbuildArgs: '/p:AssemblyVersion=''$(Date:yyyy.MM.dd)$(Rev:.r)'
+    msbuildArgs: '/p:AssemblyVersion=$(Date:yyyy.MM.dd)$(Rev:.r)'
     solution: '$(solution)'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
