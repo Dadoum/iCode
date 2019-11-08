@@ -40,5 +40,5 @@ steps:
 - task: PublishPipelineArtifact@1
   inputs:
     targetPath: '$(Pipeline.Workspace)/s/bin/Release'
-    artifact: 'iCode-nightly'
+    artifact: 'iCode'
     publishLocation: 'pipeline'
