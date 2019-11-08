@@ -5,7 +5,7 @@
 trigger:
 - master
 
-name: '$(Date:yyyy.MM.dd)-$(Rev:.r)'
+name: '$(Date:yyyy.MM.dd)$(Rev:.r)'
 
 pool:
   vmImage: 'windows-latest'
