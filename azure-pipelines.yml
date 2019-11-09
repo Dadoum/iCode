@@ -24,7 +24,7 @@ steps:
 
 - task: CmdLine@2
   inputs:
-    script: '$(Pipeline.Workspace)/s/AssemblyGenerator.sh '
+    script: '$(Pipeline.Workspace)/s/AssemblyGenerator.sh $(Build.BuildNumber)'
 
 - task: VSBuild@1
   inputs:
