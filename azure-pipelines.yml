@@ -8,7 +8,7 @@ trigger:
 name: '$(Date:yyyy.MM.dd)$(Rev:.r)'
 
 pool:
-  vmImage: 'windows-latest'
+  vmImage: 'ubuntu-latest'
 
 variables:
   solution: '**/*.sln'
@@ -22,9 +22,12 @@ steps:
   inputs:
     restoreSolution: '$(solution)'
 
+- task: CmdLine@2
+  inputs:
+    script: '$(Pipeline.Workspace)/s/AssemblyGenerator.sh $(Build.BuildNumber)'
+
 - task: VSBuild@1
   inputs:
-    msbuildArgs: '/p:AssemblyVersionNumber=$(Build.BuildNumber)'
     solution: '$(solution)'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
