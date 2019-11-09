@@ -24,7 +24,7 @@ steps:
 
 - task: CmdLine@2
   inputs:
-    script: 'echo [AssemblyVersion("$(Build.BuildNumber)")] >> $(Pipeline.Workspace)/s/Properties/AssemblyInfo.cs'
+    script: 'echo [assembly: [AssemblyVersion("$(Build.BuildNumber)")]] >> $(Pipeline.Workspace)/s/Properties/AssemblyInfo.cs'
 
 - task: VSBuild@1
   inputs:
