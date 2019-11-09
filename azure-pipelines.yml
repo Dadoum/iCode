@@ -22,13 +22,9 @@ steps:
   inputs:
     restoreSolution: '$(solution)'
 
-- task: CmdLine@2
-  inputs:
-    script: 'sed -i "s/0.0.0.0/$(Build.BuildNumber)/g" $(Pipeline.Workspace)/s/Properties/AssemblyInfo.cs'
-
 - task: VSBuild@1
   inputs:
-    msbuildArgs: '/p:AssemblyVersion=$(Build.BuildNumber)'
+    msbuildArgs: '/p:AssemblyVersionNumber=$(Build.BuildNumber)'
     solution: '$(solution)'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
