@@ -8,7 +8,7 @@ trigger:
 name: '$(Date:yyyy.MM.dd)$(Rev:.r)'
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: 'windows-latest'
 
 variables:
   solution: '**/*.sln'
@@ -24,7 +24,7 @@ steps:
 
 - task: CmdLine@2
   inputs:
-    script: '$(Pipeline.Workspace)/s/AssemblyGenerator.sh $(Build.BuildNumber)'
+    script: 'echo [AssemblyVersion("$(Build.BuildNumber)")] >> $(Pipeline.Workspace)/s/Properties/AssemblyInfo.cs'
 
 - task: VSBuild@1
   inputs:
