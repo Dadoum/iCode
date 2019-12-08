@@ -1,6 +1,8 @@
 ﻿# iCode [![Build Status](https://dev.azure.com/DadoumDev/iCode/_apis/build/status/Dadoum.iCode?branchName=master)](https://dev.azure.com/DadoumDev/iCode/_build/latest?definitionId=1&branchName=master)
 iCode is a complex heavyweight unreliable iOS IDE for Linux.
 
+**Actually, the script that generates certificates is broken. I investigate Apple's server API to fix this issue. In the meantime, you can generate certificates elsewhere and put it in the developer folder like the ReadMe file says.**
+
 ## How do I run it ?
 iCode requires `mono-runtime`, `gtk-sharp3`, `libgdl-3-5`, `xcb` and `clang` *
 
