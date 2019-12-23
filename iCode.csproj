@@ -169,7 +169,6 @@
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="readme.md" />
-    <None Include="lib\Gdl.dll" />
     <None Include="lib\gtksourceview3-sharp.dll" />
     <None Include="tools\developer\CSR" />
     <None Include="tools\developer\certificate.pem" />
@@ -5074,6 +5073,7 @@
     <None Include="FodyWeavers.xsd" />
     <None Include="gtk-gui\gui.stetic" />
     <None Include="resources\forms\MainWindow-old.ui" />
+    <None Include="lib\gdl-sharp.dll" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Stetic\" />
