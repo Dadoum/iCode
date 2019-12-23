@@ -37,6 +37,11 @@
           <command>chmod +x iCode.exe</command>
           <workingdir>${TargetDir}</workingdir>
         </Command>
+        <Command>
+          <type>AfterBuild</type>
+          <command>/bin/cp -rf ./tools ${TargetDir}/tools</command>
+          <workingdir>${ProjectDir}</workingdir>
+        </Command>
       </CustomCommands>
     </CustomCommands>
   </PropertyGroup>
@@ -57,48 +62,10 @@
     <Reference Include="Costura">
       <HintPath>packages\Costura.Fody.4.1.0\lib\net40\Costura.dll</HintPath>
     </Reference>
-    <Reference Include="Gdl">
-      <HintPath>lib\Gdl.dll</HintPath>
-    </Reference>
     <Reference Include="gtksourceview3-sharp">
       <HintPath>lib\gtksourceview3-sharp.dll</HintPath>
     </Reference>
-    <Reference Include="gtk-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
-      <Package>gtk-sharp-3.0</Package>
-      <SpecificVersion>False</SpecificVersion>
-      <IncludeInPackage>false</IncludeInPackage>
-    </Reference>
-    <Reference Include="glib-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
-      <Package>glib-sharp-3.0</Package>
-      <SpecificVersion>False</SpecificVersion>
-      <IncludeInPackage>false</IncludeInPackage>
-    </Reference>
-    <Reference Include="gdk-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
-      <Package>gdk-sharp-3.0</Package>
-      <IncludeInPackage>false</IncludeInPackage>
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
-    <Reference Include="gio-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
-      <Package>gio-sharp-3.0</Package>
-      <SpecificVersion>False</SpecificVersion>
-      <IncludeInPackage>false</IncludeInPackage>
-    </Reference>
-    <Reference Include="cairo-sharp, Version=1.10.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756">
-      <Package>gtk-sharp-3.0</Package>
-      <SpecificVersion>False</SpecificVersion>
-      <IncludeInPackage>false</IncludeInPackage>
-    </Reference>
-    <Reference Include="atk-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
-      <Package>gtk-sharp-3.0</Package>
-      <SpecificVersion>False</SpecificVersion>
-      <IncludeInPackage>false</IncludeInPackage>
-    </Reference>
     <Reference Include="Mono.Posix" />
-    <Reference Include="pango-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
-      <Package>gtk-sharp-3.0</Package>
-      <SpecificVersion>False</SpecificVersion>
-      <IncludeInPackage>false</IncludeInPackage>
-    </Reference>
     <Reference Include="System.Xaml" />
     <Reference Include="System" />
     <Reference Include="System.IO.Compression.FileSystem" />
@@ -110,14 +77,32 @@
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
+    <Reference Include="gtk-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
+      <Package>gtk-sharp-3.0</Package>
+    </Reference>
+    <Reference Include="glib-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
+      <Package>glib-sharp-3.0</Package>
+    </Reference>
+    <Reference Include="pango-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
+      <Package>gtk-sharp-3.0</Package>
+    </Reference>
+    <Reference Include="atk-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
+      <Package>gtk-sharp-3.0</Package>
+    </Reference>
+    <Reference Include="gio-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
+      <Package>gio-sharp-3.0</Package>
+    </Reference>
+    <Reference Include="gdk-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
+      <Package>gdk-sharp-3.0</Package>
+    </Reference>
+    <Reference Include="gdl-sharp">
+      <HintPath>..\..\Documents\GdlSharp-3.26.0\out\gdl-sharp.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="resources\images\icon.png" />
     <EmbeddedResource Include="resources\archives\objective-c-template.zip">
       <LogicalName>objc-template</LogicalName>
-    </EmbeddedResource>
-    <EmbeddedResource Include="gtk-gui\gui.stetic">
-      <LogicalName>gui.stetic</LogicalName>
     </EmbeddedResource>
     <EmbeddedResource Include="resources\forms\NewProjectWindow.ui">
       <LogicalName>NewProject</LogicalName>
@@ -129,7 +114,7 @@
       <LogicalName>Exception</LogicalName>
     </EmbeddedResource>
     <EmbeddedResource Include="resources\forms\MainWindow.ui">
-      <LogicalName>Main</LogicalName>
+      <LogicalName>MainWindow</LogicalName>
     </EmbeddedResource>
     <EmbeddedResource Include="resources\forms\ProjectExplorerWidget.ui">
       <LogicalName>ProjectExplorer</LogicalName>
@@ -169,17 +154,17 @@
     </Compile>
     <Compile Include="NewProjectWindow.cs" />
     <Compile Include="AboutWindow.cs" />
-    <Compile Include="gtk-gui\generated.cs" />
-    <Compile Include="gtk-gui\iCode.ExceptionWindow.cs" />
-    <Compile Include="gtk-gui\iCode.ProjectExplorerWidget.cs" />
-    <Compile Include="gtk-gui\iCode.PropertyWidget.cs" />
-    <Compile Include="gtk-gui\iCode.WelcomeWidget.cs" />
-    <Compile Include="gtk-gui\MainWindow.cs" />
     <Compile Include="OutputWidget.cs">
       <LogicalName>iCode.OutputWidget.cs</LogicalName>
     </Compile>
     <Compile Include="DeviceSelectorWindow.cs" />
     <Compile Include="PList.cs" />
+    <Compile Include="gtk-gui\generated.cs" />
+    <Compile Include="gtk-gui\iCode.PropertyWidget.cs" />
+    <Compile Include="gtk-gui\iCode.WelcomeWidget.cs" />
+    <Compile Include="gtk-gui\iCode.ExceptionWindow.cs" />
+    <Compile Include="gtk-gui\iCode.ProjectExplorerWidget.cs" />
+    <Compile Include="Names.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -5087,7 +5072,8 @@
     <None Include="list.txt" />
     <None Include="FodyWeavers.xml" />
     <None Include="FodyWeavers.xsd" />
-    <None Include="AssemblyGenerator.sh" />
+    <None Include="gtk-gui\gui.stetic" />
+    <None Include="resources\forms\MainWindow-old.ui" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Stetic\" />

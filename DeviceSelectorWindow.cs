@@ -46,7 +46,7 @@ namespace iCode
                 iDevice.idevice_new(out deviceHandle, (string)(devicesList.Model as ListStore).GetValue(outp, 1)).ThrowOnError();
 
                 LockdownClientHandle lockdownHandle;
-                Lockdown.lockdownd_client_new_with_handshake(deviceHandle, out lockdownHandle, "iCode").ThrowOnError();
+                Lockdown.lockdownd_client_new_with_handshake(deviceHandle, out lockdownHandle, Names.ApplicationName).ThrowOnError();
 
                 /*PlistHandle producttype;
                 Lockdown.lockdownd_get_value(lockdownHandle, null, "ProductType", out producttype);

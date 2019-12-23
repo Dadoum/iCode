@@ -30,7 +30,7 @@ namespace iCode
                 this.Destroy();
             };
 
-            this.Title = ("About iCode");
+            this.Title = ("About " + Names.ApplicationName);
             this.label.LabelProp = this.label.LabelProp.Replace("VERSIONNUMBER", Assembly.GetEntryAssembly().GetName().Version.ToString());
         }
     }

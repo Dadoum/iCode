@@ -9,7 +9,13 @@ public static class Console
 		System.Console.WriteLine("[" + name + "]: " + s);
 	}
 
-	public static void WriteLine(string s, params object[] format)
+    public static void WriteLine(object o)
+    {
+        string name = new StackTrace().GetFrame(1).GetMethod().ReflectedType.Name;
+        System.Console.WriteLine("[" + name + "]: " + o);
+    }
+
+    public static void WriteLine(string s, params object[] format)
 	{
 		string name = new StackTrace().GetFrame(1).GetMethod().ReflectedType.Name;
 		System.Console.WriteLine("[" + name + "]: " + string.Format(s, format));

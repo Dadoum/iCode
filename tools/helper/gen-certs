@@ -20,29 +20,6 @@ if [ $? -eq 1 ]; then
     exit 1
 fi
 
-if [ $# -lt "3" ]
-then
-    if [ $# -lt "2" ]
-    then
-        printf "${RED}%s${NORMAL}\n" "Usage: "$0" <AppleID> <Password> [Device UUID or connect device]"
-        exit 1
-    fi
-    APPLEID="$1"
-    PASSWORD="$2"
-    UUID=$(ideviceinfo -k UniqueDeviceID)
-    
-    ideviceinfo -k UniqueDeviceID &>/dev/null
-    if [ $? -eq 255 ]; then
-        printf "${RED} No device connected\n"
-        exit 1
-    fi
-    
-    printf "UUID is "$UUID"\n"
-else 
-    APPLEID="$1"
-    PASSWORD="$2"
-    UUID="$3"
-fi
 
 ############### STATIC VALUES ###############
 
@@ -110,14 +87,17 @@ fi
 
 ############### REQUEST 1 (AUTHENTICATE TO APPLE) ###############
 
-POST1=$(curl --compressed -k -A "Xcode" --data "appIdKey="$APPIDKEY"&appleId="$APPLEID"&format=plist&password="$PASSWORD"&protocolVersion=A1234&userLocale=en_US" https://idmsa.apple.com/IDMSWebAuth/clientDAW.cgi --header "application/x-www-form-urlencoded")
+XML="<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\"><plist version=\"1.0\"><dict><key>Header</key><dict><key>Version</key><string>1.0.1</string></dict><key>Request</key><dict><key>A2k</key><data>eQbpMpIIHlIec4DPBojsSb1sQps17ZpjPzM4C6wzVGDX069ucpGw+NOx95dSs/zE7AVJLZE9tsN7eEMBU1rcRObXYaxiqzCvONfzhfGQaOrxBA92j3eXj+MshUl4nE+0N5W23ig0j6o9cT8BFT386ec8g9HIHbusqiXMlnL2yxYMiPDgOljJfszb08bv8NnfIyEJv2RClSVWFW9UjLlMk1calo4eOHpYvhJG3vmGT/tXzwJtbEc4dgHV6kzp3023nH4TO0PHSmegfATi+YlRazEnVvYao7UaF9lCNr2pbcevsTyL+VwxD8uELqlHcvH8aAjw4lNHQfd/bGMAWQl50w==</data><key>cpd</key><dict><key>X-Apple-I-Client-Time</key><string>2019-11-29T20:33:03Z</string><key>X-Apple-I-Locale</key><string>en_FR</string><key>X-Apple-I-MD</key><string>AAAABQAAABDD6TC80g0WaHS+0R+NkJNBAAAAAw==</string><key>X-Apple-I-MD-M</key><string>faFsm6glupJEkv10H8HxT+cpTVQ/q8mWyPiJRkYfbXJDfIK+eL52Z7GyRCamzWYnvv1N/US6VaawwZG9</string><key>X-Apple-I-MD-RINFO</key><string>17106176</string><key>X-Apple-I-SRL-NO</key><string>DNPS88X1HG82</string><key>X-Apple-I-TimeZone</key><string>CET</string><key>X-Apple-Locale</key><string>en_FR</string><key>X-Mme-Device-Id</key><string>e53db365366a621313eb3e0521e67f8aede2de0f</string><key>bootstrap</key><true/><key>icscrec</key><true/><key>loc</key><string>en_FR</string><key>pbe</key><false/><key>prkgen</key><true/><key>svct</key><string>iCloud</string></dict><key>o</key><string>init</string><key>ps</key><array><string>s2k</string><string>s2k_fo</string></array><key>u</key><string>compte.adam.c@gmail.com</string></dict></dict></plist>"
+POST1=$(curl --compressed -k -A "Xcode" --data "$XML" https://gsa.apple.com/grandslam/GsService2 --header "application/x-www-form-urlencoded")
+echo $POST1
+
+exit
 
 MYACINFO=$(echo $POST1 | xmllint --format --xpath "string(//string[3]/text())" -)
 RESPONSEID=$(echo $POST1 | xmllint --format --xpath "string(//string[5]/text())" -)
 
 echo "1. authenticate to apple"
 echo "$NEWLINE"
-
 
 ############### REQUEST 2 (GET TEAM INFORMATION) ###############
 
@@ -296,7 +276,7 @@ echo "$NEWLINE"
 echo "DONE"
 echo "$NEWLINE"
 
-} &>/dev/null
+}
 
 
 

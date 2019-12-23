@@ -1,18 +1,20 @@
 ﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
 using Gdk;
 using Gdl;
 using Gtk;
 using iCode;
-using Stetic;
+using UI = Gtk.Builder.ObjectAttribute;
 
-public partial class MainWindow : Gtk.Window
+public class MainWindow : Gtk.Window
 {
     #region Getters
     public Label StateLabel
     {
         get
         {
-            return this.label1;
+            return label1;
         }
     }
 
@@ -49,13 +51,45 @@ public partial class MainWindow : Gtk.Window
     }
     #endregion
 
-    public MainWindow() : base(Gtk.WindowType.Toplevel)
+    Builder builder;
+
+#pragma warning disable 649
+    [UI]
+    private global::Gtk.MenuItem OpenProjectAction;
+    [UI]
+    private global::Gtk.MenuItem CreateProjectAction;
+    [UI]
+    private global::Gtk.MenuItem AboutICodeAction;
+    [UI]
+    private global::Gtk.MenuItem BuildProjectAction;
+    [UI]
+    private global::Gtk.Button button6;
+    [UI]
+    private global::Gtk.Button button7;
+    [UI]
+    private global::Gtk.ProgressBar progressbar1;
+    [UI]
+    private global::Gtk.EventBox status_box;
+    [UI]
+    private global::Gtk.Label label1;
+#pragma warning restore 649
+
+    public static MainWindow Create()
+    {
+        Builder builder = new Builder(null, "MainWindow", null);
+        return new MainWindow(builder, builder.GetObject("MainWindow").Handle);
+    }
+
+    public MainWindow(Builder builder, IntPtr handle) : base(handle)
     {
         try 
-        { 
+        {
+            this.builder = builder;
+            builder.Autoconnect(this);
+            this.Title = Names.ApplicationName;
+            progressbar1.Text = Names.ApplicationName;
             CodeWidget.Initialize();
-            Build();
-            SetSizeRequest(800, 600);
+            // SetSizeRequest(800, 600);
             Box box = new Box(Orientation.Vertical, 0);
             dock = new Dock();
             this.master = (DockMaster) this.dock.Master;
@@ -69,38 +103,41 @@ public partial class MainWindow : Gtk.Window
 
             DockItem dockItem = new DockItem("code1", "Code", Stock.Edit, DockItemBehavior.CantClose);
             dockItem.Grip.Hide();
-            this.dock.Add(dockItem, DockPlacement.Center);
+            this.dock.AddItem(dockItem, DockPlacement.Center);
             this.dock.BorderWidth = 2u;
-            CodeWidget.AddWelcomeTab("Welcome to iCode !");
+            CodeWidget.AddWelcomeTab(string.Format("Welcome to {0} !", Names.ApplicationName));
             dockItem.Add(this.GetCodePane());
             dockItem.ShowAll();
 
             DockItem dockItem4 = new DockItem("outputConsole", "Output", Stock.Execute, 0);
-            this.dock.Add(dockItem4, DockPlacement.Bottom);
+            this.dock.AddItem(dockItem4, DockPlacement.Bottom);
             dockItem4.Add(outputWidget);
             dockItem4.ShowAll();
 
             DockItem dockItem2 = new DockItem("projectExplorer", "Project Explorer", Stock.Harddisk, 0);
-            this.dock.Add(dockItem2, DockPlacement.Left);
+            this.dock.AddItem(dockItem2, DockPlacement.Left);
             dockItem2.Add(this.CreateProjectExplorerPane());
             dockItem2.ShowAll();
 
             DockItem dockItem3 = new DockItem("properties", "Properties", Stock.Properties, 0);
-            this.dock.Add(dockItem3, DockPlacement.Right);
+            this.dock.AddItem(dockItem3, DockPlacement.Right);
             dockItem3.Add(this.CreatePropertiesPane());
             dockItem3.ShowAll();
 
-            base.Remove(this.container);
-            this.container.Add(box);
-            Box.BoxChild boxChild = (Box.BoxChild)this.container[box];
-            boxChild.Position = 2;
-            boxChild.Expand = true;
-            boxChild.Fill = true;
-            base.Add(this.container);
+            // this.Decorated = false;
+            //HeaderBar
+            this.DeleteEvent += OnDeleteEvent;
+            this.Add(box);
             this.Icon = Pixbuf.LoadFromResource("iCode.resources.images.icon.png");
             this.BuildProjectAction.Activated += (sender, e) => 
             {
-                ProjectManager.BuildProject();
+                Task.Factory.StartNew(() =>
+                {
+                    if (ProjectManager.BuildProject())
+                        StateLabel.Text = "Build succeeded.";
+                    else
+                        StateLabel.Text = "Build failed.";
+                });
             };
             this.AboutICodeAction.Activated += (sender, e) =>
             {
@@ -109,14 +146,35 @@ public partial class MainWindow : Gtk.Window
            
             ProjectManager.AddSensitiveObject(BuildProjectAction);
             ProjectManager.AddSensitiveObject(button6);
-            ((Label) button6.Children[0]).UseMarkup = true;
-            ((Label)button6.Children[0]).Markup = "Run \u00A0 <span foreground=\"green\">▶</span>";
-            button6.StyleContext.AddClass("circular");
+            ProjectManager.AddSensitiveObject(button7);
+            var tmp = new Label();
+            var color = tmp.Style.BaseColors.First();
+            var str = "#" + Convert.ToInt16(color.Red).ToString("X2").GetLast(2) + Convert.ToInt16(color.Green).ToString("X2").GetLast(2) + Convert.ToInt16(color.Blue).ToString("X2").GetLast(2);
+            tmp.Dispose();
 
             this.button6.Clicked += (sender, e) => 
             {
                 ProjectManager.RunProject();
             };
+            Gtk.CssProvider nopad = new CssProvider();
+            nopad.LoadFromData(@"
+            widget
+            { 
+                border-radius: 4px;
+                background: " + str + @";
+            }
+            progress, trough 
+            {
+                border-bottom-right-radius: 4px;
+                border-bottom-left-radius: 4px;
+                min-height: 4px;
+            }
+            ");
+            status_box.StyleContext.AddProvider(nopad, 1);
+            progressbar1.StyleContext.AddProvider(nopad, 1);
+            label1.Text = Names.ApplicationName;
+            CreateProjectAction.Activated += CreateProject;
+            OpenProjectAction.Activated += LoadProjectActivated;
             // var b = layout.LoadFromFile(System.IO.Path.Combine(Program.ConfigPath, "layouts/saved.layout"));
             // Console.WriteLine("Fail or success ? It's " + b + " !");
         }

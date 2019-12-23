@@ -21,7 +21,7 @@ namespace iCode
                 Console.WriteLine("Initialized GTK and GDL.");
                 NativeLibraries.Load(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/libs/"));
                 Console.WriteLine("Initialized libimobiledevice.");
-                Program.WinInstance = new MainWindow();
+                Program.WinInstance = MainWindow.Create();
                 Program.WinInstance.ShowAll();
                 Console.WriteLine("Initialized window.");
                 Gtk.Application.Run();

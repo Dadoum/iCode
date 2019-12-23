@@ -26,7 +26,17 @@ public static class Extensions
 		widget.OverrideFont(font_desc);
 	}
 
-	public static void Add(this Notebook notebook, Widget widget, string str, bool isVolatile)
+    public static string GetLast(this string source, int tail_length)
+    {
+        if (tail_length >= source.Length)
+            return source;
+        return source.Substring(source.Length - tail_length);
+    }
+
+    public static int To256Integer(this double f) => 
+        (f >= 1.0 ? 255 : (f <= 0.0 ? 0 : (int)Math.Floor(f * 256.0)));
+
+    public static void Add(this Notebook notebook, Widget widget, string str, bool isVolatile)
 	{
         try
         {
