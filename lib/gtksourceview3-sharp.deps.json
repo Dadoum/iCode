@@ -1,0 +1,123 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v2.1",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v2.1": {
+      "gtksourceview3-sharp/1.0.0": {
+        "dependencies": {
+          "atk-sharp": "3.0.0.0",
+          "cairo-sharp": "3.0.0.0",
+          "gdk-sharp": "3.0.0.0",
+          "gio-sharp": "3.0.0.0",
+          "glib-sharp": "3.0.0.0",
+          "gtk-sharp": "3.0.0.0",
+          "pango-sharp": "3.0.0.0"
+        },
+        "runtime": {
+          "gtksourceview3-sharp.dll": {}
+        }
+      },
+      "atk-sharp/3.0.0.0": {
+        "runtime": {
+          "atk-sharp.dll": {
+            "assemblyVersion": "3.0.0.0",
+            "fileVersion": "3.0.0.0"
+          }
+        }
+      },
+      "cairo-sharp/3.0.0.0": {
+        "runtime": {
+          "cairo-sharp.dll": {
+            "assemblyVersion": "3.0.0.0",
+            "fileVersion": "3.0.0.0"
+          }
+        }
+      },
+      "gdk-sharp/3.0.0.0": {
+        "runtime": {
+          "gdk-sharp.dll": {
+            "assemblyVersion": "3.0.0.0",
+            "fileVersion": "3.0.0.0"
+          }
+        }
+      },
+      "gio-sharp/3.0.0.0": {
+        "runtime": {
+          "gio-sharp.dll": {
+            "assemblyVersion": "3.0.0.0",
+            "fileVersion": "3.0.0.0"
+          }
+        }
+      },
+      "glib-sharp/3.0.0.0": {
+        "runtime": {
+          "glib-sharp.dll": {
+            "assemblyVersion": "3.0.0.0",
+            "fileVersion": "3.0.0.0"
+          }
+        }
+      },
+      "gtk-sharp/3.0.0.0": {
+        "runtime": {
+          "gtk-sharp.dll": {
+            "assemblyVersion": "3.0.0.0",
+            "fileVersion": "3.0.0.0"
+          }
+        }
+      },
+      "pango-sharp/3.0.0.0": {
+        "runtime": {
+          "pango-sharp.dll": {
+            "assemblyVersion": "3.0.0.0",
+            "fileVersion": "3.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "gtksourceview3-sharp/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "atk-sharp/3.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "cairo-sharp/3.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "gdk-sharp/3.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "gio-sharp/3.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "glib-sharp/3.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "gtk-sharp/3.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "pango-sharp/3.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

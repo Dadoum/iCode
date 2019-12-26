@@ -1,0 +1,224 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Text;
+using Gdk;
+using Gtk;
+using iCode;
+using iCode.GUI;
+using iCode.GUI.Tabs;
+using Pango;
+
+namespace iCode.Utils
+{
+    public static class Extensions
+    {
+        public static Dictionary<string, Widget> tabs = new Dictionary<string, Widget>();
+
+        public static void ModifyFont(this Widget widget, string Family, int Size, Pango.Style Sty = Pango.Style.Normal)
+        {
+            FontDescription font_desc = new FontDescription
+            {
+                Family = Family,
+                Size = Convert.ToInt32((double)Size * Pango.Scale.PangoScale),
+                Style = Sty
+            };
+            widget.OverrideFont(font_desc);
+        }
+
+        public static string GetLast(this string source, int tail_length)
+        {
+            if (tail_length >= source.Length)
+                return source;
+            return source.Substring(source.Length - tail_length);
+        }
+
+        public static int To256Integer(this double f) =>
+            (f >= 1.0 ? 255 : (f <= 0.0 ? 0 : (int)Math.Floor(f * 256.0)));
+
+        public static void Add(this Notebook notebook, Widget widget, string str, bool isVolatile)
+        {
+            try
+            {
+                widget.Name = str;
+                Extensions.tabs.Add(str, widget);
+
+                ScrolledWindow scrolledWindow = new ScrolledWindow();
+                scrolledWindow.Add(widget);
+                scrolledWindow.Name = str;
+                if (widget is CodeTabWidget)
+                {
+                    notebook.AppendPage(scrolledWindow, ((widget as CodeTabWidget).GetLabel()));
+
+                    (widget as CodeTabWidget).GetLabel().ShowAll();
+                    (widget as CodeTabWidget).GetLabel().CloseClicked += delegate (object obj, EventArgs eventArgs)
+                    {
+                        notebook.RemovePage(notebook.PageNum(notebook.Children.First(x => x == scrolledWindow)));
+                        Extensions.tabs.Remove(str);
+                    };
+                }
+                else
+                {
+                    NotebookTabLabel notebookTabLabel = new NotebookTabLabel(str, widget);
+
+                    notebookTabLabel.CloseClicked += delegate (object obj, EventArgs eventArgs)
+                    {
+                        notebook.RemovePage(notebook.PageNum(notebook.Children.First(x => x == scrolledWindow)));
+                        Extensions.tabs.Remove(str);
+                    };
+                    notebook.AppendPage(scrolledWindow, notebookTabLabel);
+                    notebookTabLabel.ShowAll();
+                }
+
+                notebook.SetTabDetachable(scrolledWindow, isVolatile);
+                notebook.SetTabReorderable(scrolledWindow, isVolatile);
+
+                widget.ShowAll();
+
+            }
+            catch (ArgumentException)
+            {
+                notebook.Page = notebook.PageNum(tabs.First(x => x.Key == str).Value);
+            }
+            catch (Exception e)
+            {
+                ExceptionWindow.Create(e, notebook).ShowAll();
+            }
+        }
+
+        public static byte[] ToByteArray(this Stream input)
+        {
+            using (MemoryStream ms = new MemoryStream())
+            {
+                input.CopyTo(ms);
+                return ms.ToArray();
+            }
+        }
+
+        public static Stream ToStream(this byte[] input)
+        {
+            using (MemoryStream ms = new MemoryStream())
+            {
+                ms.Write(input, 0, input.Length);
+                return ms;
+            }
+        }
+
+        public static Pixbuf GetIconFromFile(string path)
+        {
+            try
+            {
+                string[] mimetypes =
+                    LaunchProcess("gio", string.Format("info -a standard::icon '{0}'", path)).Split('\n')[2]
+                        .Split(new string[] {": "}, StringSplitOptions.None)[1]
+                        .Split(new string[] {", "}, StringSplitOptions.None);
+                mimetypes[0] = mimetypes[0].TrimStart(' ');
+
+                string theme = LaunchProcess("gsettings", "get org.gnome.desktop.interface icon-theme");
+                theme = theme.TrimEnd('\n').Trim('\'');
+
+                foreach (string s in mimetypes)
+                {
+                    string file = string.Format("/usr/share/icons/{0}/mimetypes/16/{1}.svg", theme, s);
+                    if (File.Exists(file))
+                    {
+                        var pixbufld = new PixbufLoader();
+                        pixbufld.Write(Encoding.UTF8.GetBytes(File.ReadAllText(file)));
+                        pixbufld.Close();
+                        return pixbufld.Pixbuf;
+                    }
+
+                    file = string.Format("/usr/share/icons/{0}/16x16/mimetypes/{1}.svg", theme, s);
+                    if (File.Exists(file))
+                    {
+                        var pixbufld = new PixbufLoader();
+                        pixbufld.Write(Encoding.UTF8.GetBytes(File.ReadAllText(file)));
+                        pixbufld.Close();
+                        return pixbufld.Pixbuf;
+                    }
+                }
+            }
+            catch
+            {
+            }
+
+            return IconLoader.LoadIcon(Program.WinInstance, "gtk-file", IconSize.Menu);
+        }
+
+        public static void ShowMessage(MessageType type, string title, string message, Gtk.Window parent = null)
+        {
+            MessageDialog md = new MessageDialog(parent, DialogFlags.DestroyWithParent, type, ButtonsType.Ok, true, message);
+            md.Title = title;
+            md.Run();
+            md.Destroy();
+        }
+
+        public static Process GetProcess(string process, string arguments)
+        {
+            var proc = new Process();
+            proc.StartInfo.Arguments = arguments;
+            proc.StartInfo.FileName = process;
+            proc.StartInfo.UseShellExecute = false;
+            proc.StartInfo.RedirectStandardOutput = true;
+            proc.StartInfo.RedirectStandardError = true;
+            
+            proc.Start();
+            //Console.WriteLine(process + " " + arguments);
+            return proc;
+        }
+
+        public static string LaunchProcess(string process, string arguments)
+        {
+            var proc = new Process();
+            proc.StartInfo.Arguments = arguments;
+            proc.StartInfo.FileName = process;
+            proc.StartInfo.UseShellExecute = false;
+            proc.StartInfo.RedirectStandardOutput = true;
+            
+            var outputBuilder = new StringBuilder();
+            proc.OutputDataReceived += delegate(object sender, DataReceivedEventArgs e)
+            {
+                outputBuilder.Append(e.Data);
+            };
+            
+            proc.Start();
+            proc.BeginOutputReadLine();
+            proc.WaitForExit();
+            proc.CancelOutputRead();
+            
+            var str = outputBuilder.ToString();
+            // Console.WriteLine($"process:{process} args:{arguments} stdout:{str}");
+            
+            return str;
+        }
+
+        public static void RemoveEvents(TreeView b)
+        {
+            FieldInfo f1 = typeof(TreeView).GetField("EventRowActivated",
+                BindingFlags.Static | BindingFlags.NonPublic);
+            object obj = f1.GetValue(b);
+            PropertyInfo pi = b.GetType().GetProperty("Events",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+            EventHandlerList list = (EventHandlerList)pi.GetValue(b, null);
+            list.RemoveHandler(obj, list[obj]);
+        }
+
+        public static byte[] ReadFully(this Stream input)
+        {
+            byte[] buffer = new byte[16 * 1024];
+            using (MemoryStream ms = new MemoryStream())
+            {
+                int read;
+                while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    ms.Write(buffer, 0, read);
+                }
+                return ms.ToArray();
+            }
+        }
+    }
+}
