@@ -16,26 +16,17 @@ variables:
   buildConfiguration: 'Release'
 
 steps:
-- task: NuGetToolInstaller@1
-
-- task: NuGetCommand@2
-  inputs:
-    restoreSolution: '$(solution)'
-
 - task: CmdLine@2
   inputs:
     script: '$(Pipeline.Workspace)/s/AssemblyGenerator.bat $(Build.BuildNumber)'
 
-- task: VSBuild@1
+- task: DotNetCoreCLI@2
   inputs:
-    solution: '$(solution)'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
-
-- task: VSTest@2
-  inputs:
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
+    command: 'publish'
+    publishWebProjects: false
+    projects: '**/*.csproj'
+    zipAfterPublish: false
+    modifyOutputPath: false
 
 - task: CopyFiles@2
   inputs:
