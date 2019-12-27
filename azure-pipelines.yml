@@ -26,6 +26,7 @@ steps:
     publishWebProjects: false
     projects: '**/*.csproj'
     zipAfterPublish: false
+    arguments: '--configuration Debug -r linux-x64 --self-contained true'
     modifyOutputPath: false
 
 - task: CopyFiles@2
