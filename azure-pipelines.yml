@@ -18,7 +18,7 @@ variables:
 steps:
 - task: CmdLine@2
   inputs:
-    script: '$(Pipeline.Workspace)/s/AssemblyGenerator.bat $(Build.BuildNumber)'
+    script: '$(Pipeline.Workspace)/s/AssemblyGenerator.sh $(Build.BuildNumber)'
 
 - task: DotNetCoreCLI@2
   inputs:
