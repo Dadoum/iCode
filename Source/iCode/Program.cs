@@ -13,30 +13,30 @@ namespace iCode
 	internal class Program
 	{
 		public static void Main(string[] args)
-        {
-            System.Console.SetOut(new DatedConsole());
-            Console.WriteLine("Initialized output.");
+		{
+			System.Console.SetOut(new DatedConsole());
+			Console.WriteLine("Initialized output.");
 
-            try
-            {
-                Directory.CreateDirectory(ConfigPath);
-                Gtk.Application.Init();
-                Console.WriteLine("Initialized GTK and GDL.");
-                NativeLibraries.Load(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/libs/"));
-                Console.WriteLine("Initialized libimobiledevice.");
-                Program.WinInstance = MainWindow.Create();
-                Program.WinInstance.ShowAll();
-                Console.WriteLine("Initialized window.");
-                Gtk.Application.Run();
-            }
-            catch (Exception e)
-            {
-                ExceptionWindow.Create(e, null).ShowAll();
-            }
-        }
+			try
+			{
+				Directory.CreateDirectory(ConfigPath);
+				Gtk.Application.Init();
+				Console.WriteLine("Initialized GTK and GDL.");
+				NativeLibraries.Load(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/libs/"));
+				Console.WriteLine("Initialized libimobiledevice.");
+				Program.WinInstance = MainWindow.Create();
+				Program.WinInstance.ShowAll();
+				Console.WriteLine("Initialized window.");
+				Gtk.Application.Run();
+			}
+			catch (Exception e)
+			{
+				ExceptionWindow.Create(e, null).ShowAll();
+			}
+		}
 
-        public static readonly string ConfigPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "iCode/");
+		public static readonly string ConfigPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "iCode/");
 
-        public static MainWindow WinInstance;
+		public static MainWindow WinInstance;
 	}
 }

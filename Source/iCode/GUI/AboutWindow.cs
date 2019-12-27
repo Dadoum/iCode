@@ -5,33 +5,33 @@ using UI = Gtk.Builder.ObjectAttribute;
 
 namespace iCode.GUI
 {
-    public class AboutWindow : Window
-    {
-        Builder builder;
+	public class AboutWindow : Window
+	{
+		Builder _builder;
 
 #pragma warning disable 649
-        [UI] private Gtk.Button ok_button;
-        [UI] private Gtk.Label label;
+		[UI] private Gtk.Button _okButton;
+		[UI] private Gtk.Label _label;
 #pragma warning restore 649
 
-        public static AboutWindow Create()
-        {
-            Builder builder = new Builder(null, "About", null);
-            return new AboutWindow(builder, builder.GetObject("AboutWindow").Handle);
-        }
+		public static AboutWindow Create()
+		{
+			Builder builder = new Builder(null, "About", null);
+			return new AboutWindow(builder, builder.GetObject("AboutWindow").Handle);
+		}
 
-        private AboutWindow(Builder builder, IntPtr handle) : base(handle)
-        {
-            this.builder = builder;
-            builder.Autoconnect(this);
+		private AboutWindow(Builder builder, IntPtr handle) : base(handle)
+		{
+			this._builder = builder;
+			builder.Autoconnect(this);
 
-            ok_button.Clicked += (sender, e) =>
-            {
-                this.Dispose();
-            };
+			_okButton.Clicked += (sender, e) =>
+			{
+				this.Dispose();
+			};
 
-            this.Title = ("About " + Names.ApplicationName);
-            this.label.LabelProp = this.label.LabelProp.Replace("VERSIONNUMBER", Assembly.GetEntryAssembly().GetName().Version.ToString());
-        }
-    }
+			this.Title = ("About " + Names.ApplicationName);
+			this._label.LabelProp = this._label.LabelProp.Replace("VERSIONNUMBER", Assembly.GetEntryAssembly().GetName().Version.ToString());
+		}
+	}
 }

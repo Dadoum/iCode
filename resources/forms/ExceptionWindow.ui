@@ -18,7 +18,7 @@
             <property name="can_focus">False</property>
             <property name="layout_style">end</property>
             <child>
-              <object class="GtkButton" id="quit_button">
+              <object class="GtkButton" id="_quitButton">
                 <property name="label">gtk-quit</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -45,7 +45,7 @@
             <property name="can_focus">False</property>
             <property name="orientation">vertical</property>
             <child>
-              <object class="GtkLabel" id="ExceptionType">
+              <object class="GtkLabel" id="_exceptionType">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="halign">start</property>
@@ -65,7 +65,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="ExceptionTitle">
+              <object class="GtkLabel" id="_exceptionTitle">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="margin_top">3</property>
@@ -93,7 +93,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="ExceptionStacktrace">
+              <object class="GtkLabel" id="_exceptionStacktrace">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="halign">start</property>

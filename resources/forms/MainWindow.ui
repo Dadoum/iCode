@@ -27,7 +27,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
-                      <object class="GtkMenuItem" id="CreateProjectAction">
+                      <object class="GtkMenuItem" id="_createProjectAction">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">Create Project...</property>
@@ -35,7 +35,7 @@
                       </object>
                     </child>
                     <child>
-                      <object class="GtkMenuItem" id="OpenProjectAction">
+                      <object class="GtkMenuItem" id="_openProjectAction">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">Open project...</property>
@@ -56,7 +56,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
-                      <object class="GtkMenuItem" id="BuildProjectAction">
+                      <object class="GtkMenuItem" id="_buildProjectAction">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">Build Project</property>
@@ -77,7 +77,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
-                      <object class="GtkMenuItem" id="AboutICodeAction">
+                      <object class="GtkMenuItem" id="_aboutICodeAction">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">About iCode...</property>
@@ -106,7 +106,7 @@
                 <property name="can_focus">False</property>
                 <property name="double_buffered">False</property>
                 <child>
-                  <object class="GtkButton" id="button6">
+                  <object class="GtkButton" id="_button6">
                     <property name="name">button6</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
@@ -124,7 +124,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkButton" id="button7">
+                  <object class="GtkButton" id="_button7">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
@@ -152,7 +152,7 @@
               </object>
             </child>
             <child type="title">
-              <object class="GtkEventBox" id="status_box">
+              <object class="GtkEventBox" id="_statusBox">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <child>
@@ -161,7 +161,7 @@
                     <property name="can_focus">False</property>
                     <property name="orientation">vertical</property>
                     <child>
-                      <object class="GtkLabel" id="label1">
+                      <object class="GtkLabel" id="_label1">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">label</property>
@@ -174,7 +174,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkProgressBar" id="progressbar1">
+                      <object class="GtkProgressBar" id="_progressbar1">
                         <property name="width_request">500</property>
                         <property name="height_request">5</property>
                         <property name="visible">True</property>

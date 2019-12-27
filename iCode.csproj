@@ -47,9 +47,6 @@
     <Reference Include="gio-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>lib\gio-sharp.dll</HintPath>
     </Reference>
-    <Reference Include="glade-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
-      <HintPath>lib\glade-sharp.dll</HintPath>
-    </Reference>
     <Reference Include="glib-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>lib\glib-sharp.dll</HintPath>
     </Reference>
@@ -58,6 +55,9 @@
     </Reference>
     <Reference Include="gtksourceview3-sharp, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>lib\gtksourceview3-sharp.dll</HintPath>
+    </Reference>
+    <Reference Include="NClang, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>lib\NClang.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
@@ -68,18 +68,8 @@
     <Reference Include="pango-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>lib\pango-sharp.dll</HintPath>
     </Reference>
-    <Reference Include="System.IO.Compression" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Xml" />
-    <Reference Include="System.Xml.Linq" />
     <Reference Include="gtksourceview3-sharp">
       <HintPath>lib\gtksourceview3-sharp.dll</HintPath>
-    </Reference>
-    <Reference Include="Mono.Posix">
-      <HintPath>lib\lib\Mono.Posix.dll</HintPath>
-    </Reference>
-    <Reference Include="System.IO.Compression">
-      <HintPath>lib\lib\System.IO.Compression.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -91,7 +81,10 @@
   <ItemGroup>
     <PackageReference Include="imobiledevice-net" Version="1.2.186" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-    <PackageReference Include="name.atsushieno.nclang" Version="1.1.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="$(SolutionDir)tools\**" />
+    <None Include="$(SolutionDir)tools\**" CopyToOutputDirectory="PreserveNewest" LinkBase="tools\" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="resources\images\icon.png" />

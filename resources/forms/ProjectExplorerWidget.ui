@@ -8,7 +8,7 @@
       <object class="GtkScrolledWindow" id="GtkScrolledWindow">
         <property name="can_focus">False</property>
         <child>
-          <object class="GtkTreeView" id="treeview1">
+          <object class="GtkTreeView" id="_treeview1">
             <property name="can_focus">True</property>
             <child internal-child="selection">
               <object class="GtkTreeSelection"/>

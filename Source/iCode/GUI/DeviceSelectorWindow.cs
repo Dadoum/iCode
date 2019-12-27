@@ -10,139 +10,139 @@ using UI = Gtk.Builder.ObjectAttribute;
 
 namespace iCode.GUI
 {
-    public class DeviceSelectorWindow : Dialog
-    {
-        Builder builder;
+	public class DeviceSelectorWindow : Dialog
+	{
+		Builder _builder;
 
-        public string attributesPlist;
+		public string AttributesPlist;
 
 #pragma warning disable 649
-        [UI] private Gtk.Button okButton;
-        [UI] private Gtk.Button cancelButton;
+		[UI] private Gtk.Button _okButton;
+		[UI] private Gtk.Button _cancelButton;
 
-        [UI] private TreeView devicesList;
+		[UI] private TreeView _devicesList;
 #pragma warning restore 649
 
-        public static DeviceSelectorWindow Create()
-        {
-            Builder builder = new Builder(null, "DeviceSelector", null);
-            return new DeviceSelectorWindow(builder, builder.GetObject("DeviceSelectorWindow").Handle);
-        }
+		public static DeviceSelectorWindow Create()
+		{
+			Builder builder = new Builder(null, "DeviceSelector", null);
+			return new DeviceSelectorWindow(builder, builder.GetObject("DeviceSelectorWindow").Handle);
+		}
 
-        private DeviceSelectorWindow(Builder builder, IntPtr handle) : base(handle)
-        {
-            this.builder = builder;
-            builder.Autoconnect(this);
+		private DeviceSelectorWindow(Builder builder, IntPtr handle) : base(handle)
+		{
+			this._builder = builder;
+			builder.Autoconnect(this);
 
-            okButton.Clicked += (sender, e) =>
-            {
-                TreeIter outp;
-                devicesList.Selection.GetSelected(out _, out outp);
+			_okButton.Clicked += (sender, e) =>
+			{
+				TreeIter outp;
+				_devicesList.Selection.GetSelected(out _, out outp);
 
-                var iDevice = LibiMobileDevice.Instance.iDevice;
-                var Lockdown = LibiMobileDevice.Instance.Lockdown;
-                var PList = LibiMobileDevice.Instance.Plist;
+				var iDevice = LibiMobileDevice.Instance.iDevice;
+				var lockdown = LibiMobileDevice.Instance.Lockdown;
+				var pList = LibiMobileDevice.Instance.Plist;
 
-                iDeviceHandle deviceHandle;
-                iDevice.idevice_new(out deviceHandle, (string)(devicesList.Model as ListStore).GetValue(outp, 1)).ThrowOnError();
+				iDeviceHandle deviceHandle;
+				iDevice.idevice_new(out deviceHandle, (string)(_devicesList.Model as ListStore).GetValue(outp, 1)).ThrowOnError();
 
-                LockdownClientHandle lockdownHandle;
-                Lockdown.lockdownd_client_new_with_handshake(deviceHandle, out lockdownHandle, Names.ApplicationName).ThrowOnError();
+				LockdownClientHandle lockdownHandle;
+				lockdown.lockdownd_client_new_with_handshake(deviceHandle, out lockdownHandle, Names.ApplicationName).ThrowOnError();
 
-                /*PlistHandle producttype;
-                Lockdown.lockdownd_get_value(lockdownHandle, null, "ProductType", out producttype);
+				/*PlistHandle producttype;
+				Lockdown.lockdownd_get_value(lockdownHandle, null, "ProductType", out producttype);
+    
+				PlistHandle version;
+				Lockdown.lockdownd_get_value(lockdownHandle, null, "ProductVersion", out version);
+    
+				PlistHandle build;
+				Lockdown.lockdownd_get_value(lockdownHandle, null, "BuildVersion", out build);
+    
+				PList.plist_get_string_val(version, out selectedDevice.iOSVersion);
+				PList.plist_get_string_val(producttype, out selectedDevice.DeviceNumber);
+				PList.plist_get_string_val(build, out selectedDevice.BuildNumber);
+    
+				build.Dispose();
+				producttype.Dispose();
+				version.Dispose();*/
 
-                PlistHandle version;
-                Lockdown.lockdownd_get_value(lockdownHandle, null, "ProductVersion", out version);
+				PlistHandle product;
+				lockdown.lockdownd_get_value(lockdownHandle, null, null, out product);
 
-                PlistHandle build;
-                Lockdown.lockdownd_get_value(lockdownHandle, null, "BuildVersion", out build);
+				uint a = 20;
+				string xml;
+				pList.plist_to_xml(product, out xml, ref a);
 
-                PList.plist_get_string_val(version, out selectedDevice.iOSVersion);
-                PList.plist_get_string_val(producttype, out selectedDevice.DeviceNumber);
-                PList.plist_get_string_val(build, out selectedDevice.BuildNumber);
+				AttributesPlist = xml;
 
-                build.Dispose();
-                producttype.Dispose();
-                version.Dispose();*/
+				deviceHandle.Dispose();
+				lockdownHandle.Dispose();
 
-                PlistHandle product;
-                Lockdown.lockdownd_get_value(lockdownHandle, null, null, out product);
+				Respond(ResponseType.Ok);
+				this.Dispose();
+			};
 
-                uint a = 20;
-                string xml;
-                PList.plist_to_xml(product, out xml, ref a);
+			_cancelButton.Clicked += (sender, e) =>
+			{
+				Respond(ResponseType.Cancel);
+				this.Dispose();
+			};
 
-                attributesPlist = xml;
-
-                deviceHandle.Dispose();
-                lockdownHandle.Dispose();
-
-                Respond(ResponseType.Ok);
-                this.Dispose();
-            };
-
-            cancelButton.Clicked += (sender, e) =>
-            {
-                Respond(ResponseType.Cancel);
-                this.Dispose();
-            };
-
-            var list = new ListStore(typeof(string) /*Name*/, typeof(string) /*UDID*/);
-            devicesList.Model = list;
+			var list = new ListStore(typeof(string) /*Name*/, typeof(string) /*UDID*/);
+			_devicesList.Model = list;
 
 
-            var cb = new CellRendererText();
-            var column = new TreeViewColumn();
-            column.PackStart(cb, false);
-            column.AddAttribute(cb, "text", 0);
-            column.Title = "Device name";
-            devicesList.AppendColumn(column);
+			var cb = new CellRendererText();
+			var column = new TreeViewColumn();
+			column.PackStart(cb, false);
+			column.AddAttribute(cb, "text", 0);
+			column.Title = "Device name";
+			_devicesList.AppendColumn(column);
 
-            var column1 = new TreeViewColumn();
-            var ct = new CellRendererText();
-            column1.PackStart(ct, false);
-            column1.AddAttribute(ct, "text", 1);
-            column1.Title = "UDID";
-            devicesList.AppendColumn(column1);
+			var column1 = new TreeViewColumn();
+			var ct = new CellRendererText();
+			column1.PackStart(ct, false);
+			column1.AddAttribute(ct, "text", 1);
+			column1.Title = "UDID";
+			_devicesList.AppendColumn(column1);
 
-            ReadOnlyCollection<string> udids;
-            int count = 0;
+			ReadOnlyCollection<string> udids;
+			int count = 0;
 
-            var idevice = LibiMobileDevice.Instance.iDevice;
-            var lockdown = LibiMobileDevice.Instance.Lockdown;
+			var idevice = LibiMobileDevice.Instance.iDevice;
+			var lockdown = LibiMobileDevice.Instance.Lockdown;
 
-            var ret = idevice.idevice_get_device_list(out udids, ref count);
+			var ret = idevice.idevice_get_device_list(out udids, ref count);
 
-            if (ret == iDeviceError.NoDevice)
-            {
-                Extensions.ShowMessage(MessageType.Error, "Cannot launch.", "No device connected", this);
-                this.Respond(ResponseType.Cancel);
-                this.Dispose();
-                this.Dispose();
-            }
-            else
-            {
-                ret.ThrowOnError();
+			if (ret == iDeviceError.NoDevice)
+			{
+				Extensions.ShowMessage(MessageType.Error, "Cannot launch.", "No device connected", this);
+				this.Respond(ResponseType.Cancel);
+				this.Dispose();
+				this.Dispose();
+			}
+			else
+			{
+				ret.ThrowOnError();
 
-                // Get the device name
-                foreach (var udid in udids)
-                {
-                    iDeviceHandle deviceHandle;
-                    idevice.idevice_new(out deviceHandle, udid).ThrowOnError();
+				// Get the device name
+				foreach (var udid in udids)
+				{
+					iDeviceHandle deviceHandle;
+					idevice.idevice_new(out deviceHandle, udid).ThrowOnError();
 
-                    LockdownClientHandle lockdownHandle;
-                    lockdown.lockdownd_client_new_with_handshake(deviceHandle, out lockdownHandle, "Quamotion").ThrowOnError();
+					LockdownClientHandle lockdownHandle;
+					lockdown.lockdownd_client_new_with_handshake(deviceHandle, out lockdownHandle, "Quamotion").ThrowOnError();
 
-                    string deviceName;
-                    lockdown.lockdownd_get_device_name(lockdownHandle, out deviceName).ThrowOnError();
+					string deviceName;
+					lockdown.lockdownd_get_device_name(lockdownHandle, out deviceName).ThrowOnError();
 
-                    ((ListStore)devicesList.Model).AppendValues(deviceName, udid);
+					((ListStore)_devicesList.Model).AppendValues(deviceName, udid);
 
-                    deviceHandle.Dispose();
-                    lockdownHandle.Dispose();
-                }
-            }
-        }
-    }
+					deviceHandle.Dispose();
+					lockdownHandle.Dispose();
+				}
+			}
+		}
+	}
 }

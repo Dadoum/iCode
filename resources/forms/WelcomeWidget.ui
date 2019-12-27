@@ -10,7 +10,7 @@
         <property name="orientation">vertical</property>
         <property name="spacing">6</property>
         <child>
-          <object class="GtkLabel" id="label1">
+          <object class="GtkLabel" id="_label1">
             <property name="can_focus">False</property>
             <property name="margin_left">3</property>
             <property name="margin_right">3</property>
@@ -33,7 +33,7 @@
                 <property name="orientation">vertical</property>
                 <property name="spacing">6</property>
                 <child>
-                  <object class="GtkLabel" id="label2">
+                  <object class="GtkLabel" id="_label2">
                     <property name="can_focus">False</property>
                     <property name="label" translatable="yes">Recent projects</property>
                   </object>
@@ -45,7 +45,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkButton" id="button1">
+                  <object class="GtkButton" id="_button1">
                     <property name="label" translatable="yes">Placeholder project</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
@@ -58,7 +58,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkButton" id="button2">
+                  <object class="GtkButton" id="_button2">
                     <property name="label" translatable="yes">Placeholder project</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
@@ -71,7 +71,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkButton" id="button3">
+                  <object class="GtkButton" id="_button3">
                     <property name="label" translatable="yes">Placeholder project</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
@@ -84,7 +84,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkButton" id="button4">
+                  <object class="GtkButton" id="_button4">
                     <property name="label" translatable="yes">Placeholder project</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
@@ -132,7 +132,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkButton" id="button5">
+                  <object class="GtkButton" id="_button5">
                     <property name="label" translatable="yes">Create new project</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
@@ -145,7 +145,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkButton" id="button6">
+                  <object class="GtkButton" id="_button6">
                     <property name="label" translatable="yes">Open existing project</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>

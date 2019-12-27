@@ -2,7 +2,7 @@
 <!-- Generated with glade 3.22.1 -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
-<object class="GtkWindow" id="AboutWindow">
+  <object class="GtkWindow" id="AboutWindow">
     <property name="can_focus">False</property>
     <child>
       <placeholder/>
@@ -17,12 +17,13 @@
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <child>
-              <object class="GtkLabel" id="label">
+              <object class="GtkLabel" id="_label">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">&lt;b&gt;iCode version: &lt;/b&gt; VERSIONNUMBER
 &lt;b&gt;Author: &lt;/b&gt; &lt;a href="https://google.com"&gt;DadoumDev&lt;/a&gt;
 &lt;b&gt;zsign version: &lt;/b&gt; zsign built from 204c2cd commit on official github 
+&lt;b&gt;NClang version: &lt;/b&gt; fork hosted on github.com/Dadoum/nclang
 
 &lt;b&gt;Licenses: &lt;/b&gt;
 iCode uses objects from the following projects:
@@ -54,7 +55,7 @@ iOS, iPhone, iPad, iDevice, xcode are owned by Apple</property>
             <property name="can_focus">False</property>
             <property name="layout_style">end</property>
             <child>
-              <object class="GtkButton" id="ok_button">
+              <object class="GtkButton" id="_okButton">
                 <property name="label">gtk-ok</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>

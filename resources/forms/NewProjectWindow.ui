@@ -18,7 +18,7 @@
             <property name="can_focus">False</property>
             <property name="layout_style">end</property>
             <child>
-              <object class="GtkButton" id="button_cancel">
+              <object class="GtkButton" id="_buttonCancel">
                 <property name="label">gtk-cancel</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -33,7 +33,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="button_ok">
+              <object class="GtkButton" id="_buttonOk">
                 <property name="label">gtk-ok</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -60,7 +60,7 @@
             <property name="can_focus">False</property>
             <property name="orientation">vertical</property>
             <child>
-              <object class="GtkIconView" id="iconView">
+              <object class="GtkIconView" id="_iconView">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="margin">6</property>
@@ -97,7 +97,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkEntry" id="input_name">
+                          <object class="GtkEntry" id="_inputName">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                           </object>
@@ -132,7 +132,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkEntry" id="input_id">
+                          <object class="GtkEntry" id="_inputId">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                           </object>
@@ -179,7 +179,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkEntry" id="input_prefix">
+                          <object class="GtkEntry" id="_inputPrefix">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                           </object>
@@ -215,7 +215,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkEntry" id="input_path">
+                          <object class="GtkEntry" id="_inputPath">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="placeholder_text" translatable="yes">~/iCode Projects/(project name)</property>

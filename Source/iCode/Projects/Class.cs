@@ -5,14 +5,14 @@ using Newtonsoft.Json.Linq;
 namespace iCode.Projects
 {
 	public class Class
-    {
-        internal readonly JObject Attributes;
-        public readonly string Filename;
-        public readonly List<string> CompilerFlags;
+	{
+		internal readonly JObject Attributes;
+		public readonly string Filename;
+		public readonly List<string> CompilerFlags;
 
-        internal Class(JToken classStruct)
+		internal Class(JToken classStruct)
 		{
-            Attributes = (Newtonsoft.Json.Linq.JObject) classStruct;
+			Attributes = (Newtonsoft.Json.Linq.JObject) classStruct;
 			this.CompilerFlags = new List<string>();
 			this.Filename = classStruct["filename"].ToString();
 			foreach (JToken jtoken in classStruct["flags"])

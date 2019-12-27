@@ -10,91 +10,91 @@ using UI = Gtk.Builder.ObjectAttribute;
 
 namespace iCode.GUI
 {
-    public class NewProjectWindow : Dialog
-    {
-        Builder builder;
+	public class NewProjectWindow : Dialog
+	{
+		Builder _builder;
 
 #pragma warning disable 649
-        [UI] private Gtk.IconView iconView;
+		[UI] private Gtk.IconView _iconView;
 
-        [UI] private Gtk.Button button_ok;
-        [UI] private Gtk.Button button_cancel;
+		[UI] private Gtk.Button _buttonOk;
+		[UI] private Gtk.Button _buttonCancel;
 
-        [UI] private Gtk.Entry input_name;
-        [UI] private Gtk.Entry input_id;
-        [UI] private Gtk.Entry input_prefix;
-        [UI] private Gtk.Entry input_path;
+		[UI] private Gtk.Entry _inputName;
+		[UI] private Gtk.Entry _inputId;
+		[UI] private Gtk.Entry _inputPrefix;
+		[UI] private Gtk.Entry _inputPath;
 #pragma warning restore 649
 
-        public string ProjectName;
+		public string ProjectName;
 
-        public string Id;
+		public string Id;
 
-        public string Prefix;
+		public string Prefix;
 
-        public new string Path;
+		public new string Path;
 
-        public string SelectedTemplatePath;
+		public string SelectedTemplatePath;
 
-        public static NewProjectWindow Create()
-        {
-            Builder builder = new Builder(null, "NewProject", null);
-            return new NewProjectWindow(builder, builder.GetObject("NewProjectWindow").Handle);
-        }
+		public static NewProjectWindow Create()
+		{
+			Builder builder = new Builder(null, "NewProject", null);
+			return new NewProjectWindow(builder, builder.GetObject("NewProjectWindow").Handle);
+		}
 
-        protected NewProjectWindow(Builder builder, IntPtr handle) : base(handle)
-        {
-            this.builder = builder;
+		protected NewProjectWindow(Builder builder, IntPtr handle) : base(handle)
+		{
+			this._builder = builder;
 
-            builder.Autoconnect(this);
+			builder.Autoconnect(this);
 
-            button_ok.Clicked += (sender, e) =>
-            {
-                ProjectName = input_name.Text;
+			_buttonOk.Clicked += (sender, e) =>
+			{
+				ProjectName = _inputName.Text;
 
-                Id = input_id.Text;
+				Id = _inputId.Text;
 
-                Prefix = input_prefix.Text;
+				Prefix = _inputPrefix.Text;
 
-                Path = input_path.Text;
+				Path = _inputPath.Text;
 
-                if (iconView.SelectedItems.Length == 0)
-                    return;
+				if (_iconView.SelectedItems.Length == 0)
+					return;
 
-                ((ListStore)iconView.Model).GetIter(out TreeIter temp, iconView.SelectedItems.FirstOrDefault());
+				((ListStore)_iconView.Model).GetIter(out TreeIter temp, _iconView.SelectedItems.FirstOrDefault());
 
-                Console.WriteLine(iconView.PathIsSelected(((ListStore)iconView.Model).GetPath(temp)).ToString());
-                SelectedTemplatePath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/templates/" + ((string) ((ListStore)iconView.Model).GetValue(temp, 1)) + ".zip");
-                Console.WriteLine(SelectedTemplatePath);
-                Respond(ResponseType.Ok);
-                this.Dispose();
-            };
+				Console.WriteLine(_iconView.PathIsSelected(((ListStore)_iconView.Model).GetPath(temp)).ToString());
+				SelectedTemplatePath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/templates/" + ((string) ((ListStore)_iconView.Model).GetValue(temp, 1)) + ".zip");
+				Console.WriteLine(SelectedTemplatePath);
+				Respond(ResponseType.Ok);
+				this.Dispose();
+			};
 
-            button_cancel.Clicked += (sender, e) =>
-            {
-                Respond(ResponseType.Cancel);
-                this.Dispose();
-            };
+			_buttonCancel.Clicked += (sender, e) =>
+			{
+				Respond(ResponseType.Cancel);
+				this.Dispose();
+			};
 
-            this.Title = "New project wizard";
-            this.iconView.SelectionMode = SelectionMode.Single;
+			this.Title = "New project wizard";
+			this._iconView.SelectionMode = SelectionMode.Single;
 
-            iconView.PixbufColumn = 0;
-            iconView.TextColumn = 1;
+			_iconView.PixbufColumn = 0;
+			_iconView.TextColumn = 1;
             
-            var store = new ListStore(typeof(Pixbuf), typeof(string));
+			var store = new ListStore(typeof(Pixbuf), typeof(string));
 
-            iconView.SelectionMode = SelectionMode.Single;
+			_iconView.SelectionMode = SelectionMode.Single;
 
-            foreach (var file in from f in Directory.GetFiles(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/templates/")) where f.EndsWith(".zip", StringComparison.CurrentCultureIgnoreCase) select f)
-            {
-                store.AppendValues(IconLoader.LoadIcon(this, "gtk-file", IconSize.Dialog), System.IO.Path.GetFileNameWithoutExtension(file));
-            }
+			foreach (var file in from f in Directory.GetFiles(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/templates/")) where f.EndsWith(".zip", StringComparison.CurrentCultureIgnoreCase) select f)
+			{
+				store.AppendValues(IconLoader.LoadIcon(this, "gtk-file", IconSize.Dialog), System.IO.Path.GetFileNameWithoutExtension(file));
+			}
 
-            store.SetSortColumnId(2, SortType.Ascending);
+			store.SetSortColumnId(2, SortType.Ascending);
 
-            iconView.Model = store;
-            iconView.ShowAll();
-        }
-    }
+			_iconView.Model = store;
+			_iconView.ShowAll();
+		}
+	}
 }

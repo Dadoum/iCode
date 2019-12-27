@@ -18,7 +18,7 @@
             <property name="can_focus">False</property>
             <property name="layout_style">end</property>
             <child>
-              <object class="GtkButton" id="okButton">
+              <object class="GtkButton" id="_okButton">
                 <property name="label">gtk-ok</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -33,7 +33,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="cancelButton">
+              <object class="GtkButton" id="_cancelButton">
                 <property name="label">gtk-cancel</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -68,7 +68,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkTreeView" id="devicesList">
+          <object class="GtkTreeView" id="_devicesList">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <child internal-child="selection">
