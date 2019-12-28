@@ -48,3 +48,14 @@ steps:
     targetPath: '$(Pipeline.Workspace)/s/iCode.tar.gz'
     artifact: 'iCode'
     publishLocation: 'pipeline'
+
+- task: CmdLine@2
+  inputs:
+    script: 'bash PackIntoAppImage.sh'
+    workingDirectory: '$(Pipeline.Workspace)/s/'
+
+- task: PublishPipelineArtifact@1
+  inputs:
+    targetPath: '$(Pipeline.Workspace)/s/iCode-x86_64.AppImage'
+    artifact: 'iCode'
+    publishLocation: 'pipeline'
