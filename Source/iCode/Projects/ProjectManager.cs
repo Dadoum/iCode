@@ -10,7 +10,6 @@ using iCode.GUI.Panels;
 using iCode.Utils;
 using Newtonsoft.Json.Linq;
 using Action = Gtk.Action;
-using Console = iCode.Utils.Console;
 using Extensions = iCode.Utils.Extensions;
 using Process = System.Diagnostics.Process;
 using Task = System.Threading.Tasks.Task;
@@ -131,10 +130,9 @@ namespace iCode.Projects
 			foreach (Class @class in ProjectManager.Project.Classes)
 			{
 				var node = treeStore.AppendValues(_projectNode,
-					Extensions.GetIconFromFile(Directory.GetParent(file).FullName + "\\" + Path.GetFileName(@class.Filename)),
+					Extensions.GetIconFromFile(Path.Combine(Project.Path, @class.Filename)),
 					Path.GetFileName(@class.Filename)
 				);
-
 				_classNodes.Add(node);
 			}
 
@@ -274,7 +272,7 @@ namespace iCode.Projects
 				Directory.CreateDirectory(Path.Combine(cachedir, "build"));
 				var flags = string.Join(" ", Flags) + " -c " + string.Join(" ", @class.CompilerFlags) + " ";
 				var proc = Extensions.GetProcess("clang", flags + "'" + Path.Combine(Project.Path, @class.Filename) + "' -o '" + Path.Combine(cachedir, "build", @class.Filename + ".output") + "'");
-				if (!(Program.WinInstance.Output.Run(proc, (int)ActionCategory.Make, out _, out _) == 0))
+				if (Program.WinInstance.Output.Run(proc, (int)ActionCategory.Make) != 0)
 					return false;
 				s += "'" + Path.Combine(cachedir, "build", @class.Filename + ".output") + "' ";
 				Program.WinInstance.ProgressBar.Fraction += Program.WinInstance.ProgressBar.PulseStep;
@@ -282,7 +280,7 @@ namespace iCode.Projects
 			Program.WinInstance.StateLabel.Text = "Linking";
 			Directory.CreateDirectory(Path.Combine(Project.Path, ".icode/Payload/" + Project.Name + ".app/"));
 			var process = Extensions.GetProcess("clang", @"-target '" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/target/arm64-apple-darwin14") + "' -framework " + string.Join(" -framework ", Project.Frameworks)  + " -isysroot '" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/sdk") + "' -arch arm64 -o '" + Path.Combine(Project.Path, ".icode/Payload/" + Project.Name + ".app/" + Project.Name) + "' " + s);
-			if (!(Program.WinInstance.Output.Run(process, (int)ActionCategory.Link, out _, out _) == 0))
+			if (Program.WinInstance.Output.Run(process, (int)ActionCategory.Link) != 0)
 				return false;
 
 			Program.WinInstance.ProgressBar.Fraction += Program.WinInstance.ProgressBar.PulseStep;
@@ -324,7 +322,7 @@ namespace iCode.Projects
 				"'" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/developer/provision-profile.mobileprovision'")
 			));
 
-			int i = Program.WinInstance.Output.Run(process, (int)ActionCategory.Sideload, out _, out _);
+			int i = Program.WinInstance.Output.Run(process, (int)ActionCategory.Sideload);
 			Program.WinInstance.ProgressBar.Fraction += Program.WinInstance.ProgressBar.PulseStep;
 
 			return i == 0;
@@ -394,13 +392,13 @@ namespace iCode.Projects
 						{
 							var file = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/dmgs/" + jobj["BuildVersion"].ToString() + "/DeveloperDiskImage.dmg");
 							var fileSig = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/dmgs/" + jobj["BuildVersion"].ToString() + "/DeveloperDiskImage.dmg.signature");
-							Program.WinInstance.Output.Run(Extensions.GetProcess("ideviceinstaller", "-U '" + Path.Combine(Project.Path, "build/" + Project.Name + ".ipa") + "'"), (int)ActionCategory.Sideload, out _, out _);
+							Program.WinInstance.Output.Run(Extensions.GetProcess("ideviceinstaller", "-U '" + Path.Combine(Project.Path, "build/" + Project.Name + ".ipa") + "'"), (int)ActionCategory.Sideload);
 							Thread.Sleep(500);
-							Program.WinInstance.Output.Run(Extensions.GetProcess("ideviceinstaller", "-i '" + Path.Combine(Project.Path, "build/" + Project.Name + ".ipa") + "'"), (int)ActionCategory.Sideload, out _, out _);
+							Program.WinInstance.Output.Run(Extensions.GetProcess("ideviceinstaller", "-i '" + Path.Combine(Project.Path, "build/" + Project.Name + ".ipa") + "'"), (int)ActionCategory.Sideload);
 							Thread.Sleep(500);
-							Program.WinInstance.Output.Run(Extensions.GetProcess("ideviceimagemounter", "'" + file + "' '" + fileSig + "'"), (int)ActionCategory.Launch, out _, out _);
+							Program.WinInstance.Output.Run(Extensions.GetProcess("ideviceimagemounter", "'" + file + "' '" + fileSig + "'"), (int)ActionCategory.Launch);
 							Thread.Sleep(500);
-							Program.WinInstance.Output.Run(Extensions.GetProcess("idevicedebug", "run " + Project.BundleId), (int)ActionCategory.Launch, out _, out _);
+							Program.WinInstance.Output.Run(Extensions.GetProcess("idevicedebug", "run " + Project.BundleId), (int)ActionCategory.Launch);
 						}
 						catch (Exception e)
 						{

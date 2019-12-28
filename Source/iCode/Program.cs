@@ -2,23 +2,29 @@
 using System.IO;
 using System.Reflection;
 using Gdl;
+using GLib;
 using Gtk;
 using iCode.GUI;
 using iCode.Utils;
 using iMobileDevice;
-using Console = iCode.Utils.Console;
 
 namespace iCode
 {
-	internal class Program
+	internal static class Program
 	{
 		public static void Main(string[] args)
 		{
 			System.Console.SetOut(new DatedConsole());
 			Console.WriteLine("Initialized output.");
-
 			try
 			{
+				Log.SetDefaultHandler(new LogFunc((domain, level, message) =>
+				{
+					if (level != LogLevelFlags.Error && level != LogLevelFlags.FlagFatal)
+						return;
+					
+					Console.WriteLine($"Gtk error: {message} ({domain})");
+				}));
 				Directory.CreateDirectory(ConfigPath);
 				Gtk.Application.Init();
 				Console.WriteLine("Initialized GTK and GDL.");

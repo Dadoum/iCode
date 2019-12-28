@@ -41,6 +41,7 @@ namespace iCode.GUI.Tabs
                     font-family: Monospace;
                 }
             ");
+			Console.WriteLine($"Loading {@class.Filename}");
 			this.StyleContext.AddProvider(css, 1);
 			this._temp = System.IO.Path.Combine(ProjectManager.Project.Path, "~" + @class.Filename);
 			_actualText = File.ReadAllText(System.IO.Path.Combine(ProjectManager.Project.Path, @class.Filename));
@@ -50,7 +51,7 @@ namespace iCode.GUI.Tabs
 			base.AutoIndent = true;
 			base.ShowLineMarks = true;
 			base.ShowLineNumbers = true;
-			base.HighlightCurrentLine = false;
+			// base.HighlightCurrentLine = true;
 			base.IndentOnTab = true;
 			this._s = base.Buffer.Text;
 			base.Buffer.Changed += this.Buffer_Changed;
@@ -168,19 +169,6 @@ namespace iCode.GUI.Tabs
 						base.Buffer.PlaceCursor(base.Buffer.GetIterAtOffset(cursorPosition));
 					}
 				}
-				else
-				{
-					try
-					{
-					}
-					catch (Exception ex)
-					{
-						Console.WriteLine("Code Completion failed: {0}", new object[]
-						{
-							ex
-						});
-					}
-				}
 			}
 			else
 			{
@@ -188,10 +176,7 @@ namespace iCode.GUI.Tabs
 				if (flag2)
 				{
 					char c4 = this._s[base.Buffer.CursorPosition];
-					Console.WriteLine("Removed {0}", new object[]
-					{
-						c4
-					});
+					// Console.WriteLine("Removed {0}", c4);
 					int num = cursorPosition;
 					bool flag3 = c4 == '\t';
 					if (flag3)
@@ -199,24 +184,12 @@ namespace iCode.GUI.Tabs
 						string text = base.Buffer.Text;
 						while (text[num - 1] == '\t')
 						{
-							Console.WriteLine("At cursor there is {0}, before {1}, and after {2}", new object[]
-							{
-								this._s[num],
-								this._s[num - 1],
-								this._s[num + 1]
-							});
 							text = text.Remove(num - 1, 1);
 							num--;
 						}
 						bool flag4 = text[num - 1] == '\n';
 						if (flag4)
 						{
-							Console.WriteLine("At cursor there is {0}, before {1}, and after {2}", new object[]
-							{
-								this._s[num],
-								this._s[num - 1],
-								this._s[num + 1]
-							});
 							text = text.Remove(num - 1, 1);
 							num--;
 						}
@@ -231,7 +204,7 @@ namespace iCode.GUI.Tabs
 
 		void Handle_KeyPressEvent(object o, KeyPressEventArgs args)
 		{
-			Console.WriteLine(args.Event.Key + " pressed");
+			// Console.WriteLine(args.Event.Key + " pressed");
 			_keys.Add(args.Event.Key);
 
 			if ((_keys.Contains(Gdk.Key.s) || _keys.Contains(Gdk.Key.S)) && (_keys.Contains(Gdk.Key.Control_L) || _keys.Contains(Gdk.Key.Control_R)))
@@ -242,7 +215,7 @@ namespace iCode.GUI.Tabs
 
 		void Handle_KeyReleaseEvent(object o, KeyReleaseEventArgs args)
 		{
-			Console.WriteLine(args.Event.Key + " released");
+			// Console.WriteLine(args.Event.Key + " released");
 			_keys.Remove(args.Event.Key);
 		}
 

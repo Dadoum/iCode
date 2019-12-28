@@ -10,7 +10,9 @@ autom4te.cache/
 *.tar.gz
 tarballs/
 test-results/
-
+# App Image generation
+*.AppImage
+AppDir/
 # Mac bundle stuff
 *.dmg
 *.app
@@ -323,3 +325,5 @@ ASALocalRun/
 .mfractor/
 # Local History for Visual Studio
 .localhistory/
+/iCode-x86_64.AppImage
+/clang

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Text;
 using UI = Gtk.Builder.ObjectAttribute;
 
 namespace iCode.GUI.Panels
@@ -32,7 +33,7 @@ namespace iCode.GUI.Panels
 			};
 		}
 
-		public int Run(Process p, int action, out string error, out string outp)
+		public int Run(Process p, int action)
 		{
 			if (action == (int)ActionCategory.Make && action != _lastAction)
 				Gtk.Application.Invoke((a, b) =>
@@ -90,24 +91,37 @@ namespace iCode.GUI.Panels
 			});
 
 			p.StartInfo.UseShellExecute = false;
+			/* Don't work since switch to .NET Core
 			p.StartInfo.RedirectStandardError = p.StartInfo.RedirectStandardOutput = true;
-			p.Start();
-
-			while (!p.StandardOutput.EndOfStream)
+			
+			p.OutputDataReceived += delegate(object sender, DataReceivedEventArgs ea)
 			{
-				string line = p.StandardOutput.ReadLine();
-
+				Console.Write(ea.Data);
 				Gtk.Application.Invoke((sender, e) =>
 				{
-					_output.Buffer.Text += line + "\n";
+					_output.Buffer.Text += ea.Data;
 				});
-			}
-
-			outp = p.StandardOutput.ReadToEnd();
-			error = p.StandardError.ReadToEnd();
-
+			};
+			
+			var outputBuilder = new StringBuilder();
+			p.OutputDataReceived += delegate(object sender, DataReceivedEventArgs e)
+			{
+				outputBuilder.Append(e.Data);
+			};
+			
+			p.ErrorDataReceived += delegate(object sender, DataReceivedEventArgs e)
+			{
+				Console.Write(ea.Data);
+				Gtk.Application.Invoke((sender, e) =>
+				{
+					_output.Buffer.Text += ea.Data;
+				});
+				outputBuilder.Append(e.Data);
+			};*/
+			
+			p.Start();
 			p.WaitForExit();
-
+			
 			Gtk.Application.Invoke((sender, e) =>
 			{
 				_output.Buffer.Text += p.StartInfo.FileName + " exited with the code " + p.ExitCode + "\n\n";

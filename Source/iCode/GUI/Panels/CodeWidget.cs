@@ -5,7 +5,6 @@ using Gtk;
 using System.IO;
 using iCode.GUI.Tabs;
 using iCode.Utils;
-using Console = iCode.Utils.Console;
 using iCode.Projects;
 
 namespace iCode.GUI.Panels
@@ -31,8 +30,8 @@ namespace iCode.GUI.Panels
 
 		public static CodeTabWidget AddCodeTab(string file)
 		{
-			Console.WriteLine(file);
-			Console.WriteLine(ProjectManager.Project.Classes.First().Filename);
+			// Console.WriteLine(file);
+			// Console.WriteLine(ProjectManager.Project.Classes.First().Filename);
 			var c = new CodeTabWidget(ProjectManager.Project.Classes.First(x => System.IO.Path.Combine(ProjectManager.Project.Path, x.Filename) == file));
 			CodeWidget.Codewidget.Tabs.Add(c, System.IO.Path.GetFileName(file), true);
 			c.ShowAll();

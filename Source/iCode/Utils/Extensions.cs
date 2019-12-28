@@ -50,12 +50,12 @@ namespace iCode.Utils
 				ScrolledWindow scrolledWindow = new ScrolledWindow();
 				scrolledWindow.Add(widget);
 				scrolledWindow.Name = str;
-				if (widget is CodeTabWidget)
+				if (widget is CodeTabWidget tabWidget)
 				{
-					notebook.AppendPage(scrolledWindow, ((widget as CodeTabWidget).GetLabel()));
+					notebook.AppendPage(scrolledWindow, (tabWidget.GetLabel()));
 
-					(widget as CodeTabWidget).GetLabel().ShowAll();
-					(widget as CodeTabWidget).GetLabel().CloseClicked += delegate (object obj, EventArgs eventArgs)
+					tabWidget.GetLabel().ShowAll();
+					tabWidget.GetLabel().CloseClicked += delegate
 					{
 						notebook.RemovePage(notebook.PageNum(notebook.Children.First(x => x == scrolledWindow)));
 						Extensions.Tabs.Remove(str);
@@ -113,9 +113,9 @@ namespace iCode.Utils
 			try
 			{
 				string[] mimetypes =
-					LaunchProcess("gio", string.Format("info -a standard::icon '{0}'", path)).Split('\n')[2]
-																			   .Split(new string[] {": "}, StringSplitOptions.None)[1]
-																			   .Split(new string[] {", "}, StringSplitOptions.None);
+					LaunchProcess("gio", $"info -a standard::icon \"{path}\"")
+						.Split(new string[] {": "}, StringSplitOptions.None)[3]
+						.Split(new string[] {", "}, StringSplitOptions.None);
 				mimetypes[0] = mimetypes[0].TrimStart(' ');
 
 				string theme = LaunchProcess("gsettings", "get org.gnome.desktop.interface icon-theme");
@@ -142,8 +142,9 @@ namespace iCode.Utils
 					}
 				}
 			}
-			catch
+			catch (Exception e)
 			{
+				Console.WriteLine($"Unable to retrieve the icon of {path}: {e}");
 			}
 
 			return IconLoader.LoadIcon(Program.WinInstance, "gtk-file", IconSize.Menu);
@@ -166,8 +167,9 @@ namespace iCode.Utils
 			proc.StartInfo.RedirectStandardOutput = true;
 			proc.StartInfo.RedirectStandardError = true;
             
-			proc.Start();
-			//Console.WriteLine(process + " " + arguments);
+			
+			// proc.Start();
+			// Console.WriteLine(process + " " + arguments);
 			return proc;
 		}
 
@@ -191,8 +193,8 @@ namespace iCode.Utils
 			proc.CancelOutputRead();
             
 			var str = outputBuilder.ToString();
-			// Console.WriteLine($"process:{process} args:{arguments} stdout:{str}");
-            
+			// Console.WriteLine($"process:{process} args:{arguments} stdout:\n{str}");
+			
 			return str;
 		}
 

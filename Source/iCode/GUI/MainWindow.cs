@@ -1,11 +1,15 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Gdk;
 using Gdl;
 using Gtk;
 using iCode.GUI.Panels;
 using iCode.Projects;
-using Console = iCode.Utils.Console;
 using UI = Gtk.Builder.ObjectAttribute;
 
 namespace iCode.GUI
@@ -66,6 +70,8 @@ namespace iCode.GUI
 		[UI]
 		private global::Gtk.MenuItem _buildProjectAction;
 		[UI]
+		private global::Gtk.MenuItem _layoutAction;
+		[UI]
 		private global::Gtk.Button _button6;
 		[UI]
 		private global::Gtk.Button _button7;
@@ -92,10 +98,9 @@ namespace iCode.GUI
 				this.Title = Names.ApplicationName;
 				_progressbar1.Text = Names.ApplicationName;
 				CodeWidget.Initialize();
-				// SetSizeRequest(800, 600);
 				Box box = new Box(Orientation.Vertical, 0);
 				_dock = new Dock();
-				this._master = (DockMaster)this._dock.Master;
+				this._master = (DockMaster) this._dock.Master;
 				_master.SwitcherStyle = SwitcherStyle.Tabs;
 				this._layout = new DockLayout(this._dock);
 				_layout.Master = _master;
@@ -126,7 +131,7 @@ namespace iCode.GUI
 				this._dock.AddItem(dockItem3, DockPlacement.Right);
 				dockItem3.Add(this.CreatePropertiesPane());
 				dockItem3.ShowAll();
-                
+
 				this.DeleteEvent += OnDeleteEvent;
 				this.Add(box);
 				this.Icon = Pixbuf.LoadFromResource("iCode.resources.images.icon.png");
@@ -140,10 +145,7 @@ namespace iCode.GUI
 							StateLabel.Text = "Build failed.";
 					});
 				};
-				this._aboutICodeAction.Activated += (sender, e) =>
-				{
-					AboutWindow.Create().ShowAll();
-				};
+				this._aboutICodeAction.Activated += (sender, e) => { AboutWindow.Create().ShowAll(); };
 
 				ProjectManager.AddSensitiveWidget(_buildProjectAction);
 				ProjectManager.AddSensitiveWidget(_button6);
@@ -151,10 +153,7 @@ namespace iCode.GUI
 
 				_label1.Text = Names.ApplicationName;
 
-				this._button6.Clicked += (sender, e) =>
-				{
-					ProjectManager.RunProject();
-				};
+				this._button6.Clicked += (sender, e) => { ProjectManager.RunProject(); };
 				Gtk.CssProvider nopad = new CssProvider();
 				nopad.LoadFromData(@"
                 widget
@@ -169,6 +168,66 @@ namespace iCode.GUI
                     min-height: 4px;
                 }
                 ");
+				var layoutFile = System.IO.Path.Combine(Program.ConfigPath, "layouts.xml");
+
+				if (!File.Exists(layoutFile))
+				{
+					_layout.SaveLayout("default_layout");
+					_layout.SaveToFile(layoutFile);
+				}
+				
+				_layout.LoadFromFile(layoutFile);
+
+				XDocument xdoc = XDocument.Load(layoutFile);
+				var layoutList = xdoc.Elements().First().Elements().ToList();
+				Dictionary<MenuItem, string> names = new Dictionary<MenuItem, string>();
+				Menu menu = new Menu();
+				
+				var saveItem = new MenuItem();
+				saveItem.Label = "Save actual layout...";
+				saveItem.Activated += (o, a) =>
+				{
+					InputWindow input = InputWindow.Create();
+					input.Title = "Select name for the layout";
+					input.Run();
+					if (string.IsNullOrWhiteSpace(input.Text))
+						return;
+					Console.WriteLine($"Saving layout \"{input.Text}\"");
+					_layout.SaveLayout(input.Text);
+					var menuItem = new MenuItem();
+					menuItem.Label = input.Text;
+					menuItem.Activated += (o, a) => { _layout.LoadLayout(input.Text); };
+					menu.Append(menuItem);
+				};
+				menu.Append(saveItem);
+				
+				foreach (var a in layoutList)
+				{
+					var menuItem = new MenuItem();
+					var name = a.Attributes().First(x => x.Name == "name").Value;
+					names.Add(menuItem, name);
+					menuItem.Label = name;
+					menuItem.Activated += (o, a) =>
+					{
+						Console.WriteLine($"Loading layout {names[menuItem]}");
+						_layout.LoadLayout(names[menuItem]);
+					};
+					menu.Append(menuItem);
+
+					if (name == "__default_")
+					{
+						this.ShowAll();
+						_layout.LoadLayout(name);
+					}
+				}
+
+				_layoutAction.Submenu = menu;
+				
+				_statusBox.ButtonPressEvent += (o, args) =>
+				{
+					// Here it will redirect to the future error pane, but I need to fix signing first
+				};
+
 				_statusBox.StyleContext.AddProvider(nopad, 1);
 				_progressbar1.StyleContext.AddProvider(nopad, 1);
 				_createProjectAction.Activated += CreateProject;
@@ -201,6 +260,8 @@ namespace iCode.GUI
 
 		protected void OnDeleteEvent(object sender, DeleteEventArgs a)
 		{
+			var layoutFile = System.IO.Path.Combine(Program.ConfigPath, "layouts.xml");
+			_layout.SaveToFile(layoutFile);
 			Gtk.Application.Quit();
 			a.RetVal = true;
 		}

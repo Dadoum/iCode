@@ -77,6 +77,7 @@
     <None Remove=".gitignore" />
     <None Remove=".gitattributes" />
     <None Remove="readme.md" />
+    <None Remove="iCode.csproj.DotSettings" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="imobiledevice-net" Version="1.2.186" />
@@ -124,6 +125,10 @@
     <None Remove="resources\forms\ExceptionWindow.ui" />
     <EmbeddedResource Include="resources\forms\ExceptionWindow.ui">
       <LogicalName>ExceptionWindow</LogicalName>
+    </EmbeddedResource>
+    <None Remove="resources\forms\InputWindow.ui" />
+     <EmbeddedResource Include="resources\forms\InputWindow.ui">
+      <LogicalName>Input</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
 </Project>

@@ -23,7 +23,12 @@ namespace iCode.Utils
 		{
 			try
 			{
-				this._console.WriteLine("[{0}] " + value, DateTime.Now.ToString("HH:mm:ss"));
+				var stacktrace = new StackTrace().GetFrames();
+				//_console.WriteLine(stacktrace.Length);
+				string name = stacktrace[3].GetMethod().ReflectedType.FullName; // The number 3 is the index of the method that called the function and skips all funcs of WriteLine 
+				string ln = stacktrace[3].GetMethod().Name + "()";
+				string line = stacktrace[3].GetFileLineNumber() != 0 ? " (" + stacktrace[3].GetFileLineNumber() + ";" + stacktrace[3].GetFileColumnNumber() +  ")" : "";
+				this._console.WriteLine("[{0}] [" + name + ":" + ln + line + "]: " + value, DateTime.Now.ToString("HH:mm:ss"));
 			}
 			catch
 			{

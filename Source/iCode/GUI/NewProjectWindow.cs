@@ -5,7 +5,6 @@ using System.Reflection;
 using Gdk;
 using Gtk;
 using iCode.Utils;
-using Console = iCode.Utils.Console;
 using UI = Gtk.Builder.ObjectAttribute;
 
 namespace iCode.GUI
