@@ -33,7 +33,7 @@ steps:
   inputs:
     SourceFolder: '$(Pipeline.Workspace)/s/tools'
     Contents: '**'
-    TargetFolder: '$(Pipeline.Workspace)/s/bin/Debug/netcoreapp3.1/linux-x64/tools'
+    TargetFolder: '$(Pipeline.Workspace)/s/bin/Debug/netcoreapp3.0/linux-x64/tools'
 
 - task: ArchiveFiles@2
   inputs:
