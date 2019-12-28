@@ -46,7 +46,7 @@ steps:
 - task: PublishPipelineArtifact@1
   inputs:
     targetPath: '$(Pipeline.Workspace)/s/iCode.tar.gz'
-    artifact: 'iCode'
+    artifact: 'iCode.tar.gz'
     publishLocation: 'pipeline'
 
 - task: CmdLine@2
@@ -57,5 +57,5 @@ steps:
 - task: PublishPipelineArtifact@1
   inputs:
     targetPath: '$(Pipeline.Workspace)/s/iCode-x86_64.AppImage'
-    artifact: 'iCode'
+    artifact: 'iCode.AppImage'
     publishLocation: 'pipeline'
