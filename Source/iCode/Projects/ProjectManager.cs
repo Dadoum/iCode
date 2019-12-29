@@ -148,7 +148,7 @@ namespace iCode.Projects
 
 			var filea = "";
 
-			using (var f = File.Open(Path.Combine(Program.ConfigPath, "recentProjects"), FileMode.OpenOrCreate))
+			using (var f = File.Open(Path.Combine(Program.ConfigPath, "RecentProjects"), FileMode.OpenOrCreate))
 			{
 				var wr = new StreamWriter(f);
 				var re = new StreamReader(f);
@@ -182,7 +182,7 @@ namespace iCode.Projects
 				widget.Sensitive = ProjectLoaded;
 			}
 
-			File.WriteAllText(Path.Combine(Program.ConfigPath, "recentProjects"), filea);
+			File.WriteAllText(Path.Combine(Program.ConfigPath, "RecentProjects"), filea);
 		}
 
 		public static Project CreateProject(string name, string id, string prefix, string zip, string path = null)

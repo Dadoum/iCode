@@ -42,11 +42,12 @@ namespace iCode.GUI
 			return new NewProjectWindow(builder, builder.GetObject("NewProjectWindow").Handle);
 		}
 
-		protected NewProjectWindow(Builder builder, IntPtr handle) : base(handle)
+		private NewProjectWindow(Builder builder, IntPtr handle) : base(handle)
 		{
 			this._builder = builder;
 
 			builder.Autoconnect(this);
+			this.Icon = Gdk.Pixbuf.LoadFromResource("iCode.resources.images.icon.png");
 
 			_buttonOk.Clicked += (sender, e) =>
 			{

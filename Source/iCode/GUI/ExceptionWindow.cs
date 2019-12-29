@@ -28,7 +28,9 @@ namespace iCode.GUI
 		ExceptionWindow(Exception ex, Gtk.Widget parent, Builder builder, IntPtr handle) :
 			base(handle)
 		{
-			builder.Autoconnect(this);
+			builder.Autoconnect(this);			
+			this.Icon = Gdk.Pixbuf.LoadFromResource("iCode.resources.images.icon.png");
+
 			this.Parent = parent;
 			this.Title = "Exception occured";
 			_exceptionType.Text = ex.GetType().FullName;

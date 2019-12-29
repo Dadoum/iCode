@@ -33,6 +33,7 @@ namespace iCode.GUI
 		{
 			this._builder = builder;
 			builder.Autoconnect(this);
+			this.Icon = Gdk.Pixbuf.LoadFromResource("iCode.resources.images.icon.png");
 
 			_okButton.Clicked += (sender, e) =>
 			{

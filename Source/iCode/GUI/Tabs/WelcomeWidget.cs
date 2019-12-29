@@ -63,9 +63,9 @@ namespace iCode.GUI.Tabs
 			_button5.Clicked += Button5_Activated;
 			_button6.Clicked += Button6_Activated;
 
-			if (File.Exists(System.IO.Path.Combine(Program.ConfigPath, "recentProjects")))
+			if (File.Exists(System.IO.Path.Combine(Program.ConfigPath, "RecentProjects")))
 			{
-				string text = File.ReadAllText(System.IO.Path.Combine(Program.ConfigPath, "recentProjects"));
+				string text = File.ReadAllText(System.IO.Path.Combine(Program.ConfigPath, "RecentProjects"));
 				var paths = text.Split('\n');
 
 				foreach (var path in from p in paths where File.Exists(System.IO.Path.Combine(p, "project.json")) select p)

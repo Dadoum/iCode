@@ -7,6 +7,7 @@ using Gtk;
 using iCode.GUI;
 using iCode.Utils;
 using iMobileDevice;
+using Newtonsoft.Json.Linq;
 
 namespace iCode
 {
@@ -18,17 +19,35 @@ namespace iCode
 			Console.WriteLine("Initialized output.");
 			try
 			{
+				Directory.CreateDirectory(ConfigPath);
+				Directory.CreateDirectory(SDKPath);
+				Directory.CreateDirectory(DeveloperPath);
 				Directory.CreateDirectory(UserDefinedTemplatesPath);
+				Directory.CreateDirectory(ConfigPath);
+				Gtk.Application.Init();
+
 				Log.SetDefaultHandler(new LogFunc((domain, level, message) =>
 				{
 					if (level != LogLevelFlags.Error && level != LogLevelFlags.FlagFatal)
 						return;
-					
+
 					Console.WriteLine($"Gtk error: {message} ({domain})");
 				}));
-				Directory.CreateDirectory(ConfigPath);
-				Gtk.Application.Init();
+
 				Console.WriteLine("Initialized GTK and GDL.");
+				
+				if (!File.Exists(SettingsPath))
+				{
+					var startup = StartupWindow.Create();
+					if ((ResponseType) startup.Run() != ResponseType.Ok)
+						return;
+
+					var jobj = new JObject();
+					jobj.Add("updateConsent", startup.Accepted);
+					File.WriteAllText(SettingsPath, jobj.ToString());
+					Console.WriteLine("Initialized settings file.");
+				}
+				
 				NativeLibraries.Load(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/libs/"));
 				Console.WriteLine("Initialized libimobiledevice.");
 				Program.WinInstance = MainWindow.Create();
@@ -44,8 +63,9 @@ namespace iCode
 
 		public static readonly string ConfigPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "iCode/");
 		public static readonly string SDKPath = System.IO.Path.Combine(Program.ConfigPath, "SDK/");
-		public static readonly string DeveloperPath = System.IO.Path.Combine(Program.ConfigPath, "developer/");
-		public static readonly string UserDefinedTemplatesPath = System.IO.Path.Combine(Program.ConfigPath, "templates/");
+		public static readonly string DeveloperPath = System.IO.Path.Combine(Program.ConfigPath, "Developer/");
+		public static readonly string UserDefinedTemplatesPath = System.IO.Path.Combine(Program.ConfigPath, "Templates/");
+		public static readonly string SettingsPath = System.IO.Path.Combine(Program.ConfigPath, "Settings.json");
 
 		public static MainWindow WinInstance;
 	}

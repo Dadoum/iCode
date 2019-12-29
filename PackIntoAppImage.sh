@@ -23,5 +23,5 @@ echo "Categories=Development;" >> ./AppDir/iCode.desktop
 cp ./resources/images/icon.png ./AppDir/iCode.png
 wget "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
 chmod a+x appimagetool-x86_64.AppImage
-./appimagetool-x86_64.AppImage ./AppDir
+./appimagetool-x86_64.AppImage ./AppDir -u "gh-releases-zsync|Dadoum|iCode|latest|iCode-*x86_64.AppImage.zsync"
 chmod +x iCode-x86_64.AppImage

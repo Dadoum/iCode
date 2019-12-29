@@ -90,6 +90,10 @@
   <ItemGroup>
     <None Remove="resources\images\icon.png" />
     <EmbeddedResource Include="resources\images\icon.png" />
+    <None Remove="resources\forms\StartupWindow.ui" />
+     <EmbeddedResource Include="resources\forms\StartupWindow.ui">
+      <LogicalName>Startup</LogicalName>
+    </EmbeddedResource>
     <None Remove="resources\forms\NewProjectWindow.ui" />
     <EmbeddedResource Include="resources\forms\NewProjectWindow.ui">
       <LogicalName>NewProject</LogicalName>

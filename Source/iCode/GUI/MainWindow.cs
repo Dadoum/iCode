@@ -168,7 +168,7 @@ namespace iCode.GUI
                     min-height: 4px;
                 }
                 ");
-				var layoutFile = System.IO.Path.Combine(Program.ConfigPath, "layouts.xml");
+				var layoutFile = System.IO.Path.Combine(Program.ConfigPath, "Layouts.xml");
 
 				if (!File.Exists(layoutFile))
 				{

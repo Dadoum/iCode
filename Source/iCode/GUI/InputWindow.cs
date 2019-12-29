@@ -25,7 +25,9 @@ namespace iCode.GUI
 		private InputWindow(Builder builder, IntPtr handle) : base(handle)
 		{
 			this._builder = builder;
-			builder.Autoconnect(this);
+			builder.Autoconnect(this);			
+			this.Icon = Gdk.Pixbuf.LoadFromResource("iCode.resources.images.icon.png");
+
 
 			_okButton.Clicked += (sender, e) =>
 			{
