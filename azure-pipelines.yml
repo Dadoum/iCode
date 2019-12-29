@@ -54,22 +54,14 @@ steps:
     script: 'bash PackIntoAppImage.sh'
     workingDirectory: '$(Pipeline.Workspace)/s/'
 
-- task: CmdLine@2
-  inputs:
-    script: 'mv $(Pipeline.Workspace)/s/iCode-x86_64.AppImage $(Pipeline.Workspace)/s/iCode-$(Build.BuildNumber)-x86_64.AppImage'
-    
-- task: CmdLine@2
-  inputs:
-    script: 'mv $(Pipeline.Workspace)/s/iCode-x86_64.AppImage.zsync $(Pipeline.Workspace)/s/iCode-$(Build.BuildNumber)-x86_64.AppImage.zsync'
-
 - task: PublishPipelineArtifact@1
   inputs:
-    targetPath: '$(Pipeline.Workspace)/s/iCode-$(Build.BuildNumber)-x86_64.AppImage'
+    targetPath: '$(Pipeline.Workspace)/s/iCode-x86_64.AppImage'
     artifact: 'iCode.AppImage'
     publishLocation: 'pipeline'
 
 - task: PublishPipelineArtifact@1
   inputs:
-    targetPath: '$(Pipeline.Workspace)/s/iCode-$(Build.BuildNumber)-x86_64.AppImage.zsync'
+    targetPath: '$(Pipeline.Workspace)/s/iCode-x86_64.AppImage.zsync'
     artifact: 'iCode.AppImage.zsync'
     publishLocation: 'pipeline'
