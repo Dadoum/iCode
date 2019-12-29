@@ -26,7 +26,7 @@ steps:
     publishWebProjects: false
     projects: '**/*.csproj'
     zipAfterPublish: false
-    arguments: '--configuration Debug -r linux-x64 --self-contained true --output $(Pipeline.Workspace)/s/bin/Debug/netcoreapp3.1'
+    arguments: '--configuration Debug -r linux-x64 --self-contained true'
     modifyOutputPath: false
 
 - task: CopyFiles@2
@@ -61,5 +61,11 @@ steps:
 - task: PublishPipelineArtifact@1
   inputs:
     targetPath: '$(Pipeline.Workspace)/s/iCode-$(Build.BuildNumber)-x86_64.AppImage'
+    artifact: 'iCode.AppImage'
+    publishLocation: 'pipeline'
+
+- task: PublishPipelineArtifact@1
+  inputs:
+    targetPath: '$(Pipeline.Workspace)/s/iCode-$(Build.BuildNumber)-x86_64.AppImage.zsync'
     artifact: 'iCode.AppImage'
     publishLocation: 'pipeline'
