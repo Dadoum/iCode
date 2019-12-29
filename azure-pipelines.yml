@@ -37,7 +37,7 @@ steps:
 
 - task: ArchiveFiles@2
   inputs:
-    rootFolderOrFile: '$(Pipeline.Workspace)/s/bin/Debug/netcoreapp3.1'
+    rootFolderOrFile: '$(Pipeline.Workspace)/s/bin/Debug/netcoreapp3.0'
     includeRootFolder: false
     archiveType: 'tar'
     archiveFile: '$(Pipeline.Workspace)/s/iCode.tar.gz'
@@ -64,7 +64,11 @@ steps:
     artifact: 'iCode.AppImage'
     publishLocation: 'pipeline'
 
+<<<<<<< HEAD
 - task: PublishPipelineArtifact@1
+=======
+    - task: PublishPipelineArtifact@1
+>>>>>>> 49170872a6d6add708de26c44889e67e754ae7df
   inputs:
     targetPath: '$(Pipeline.Workspace)/s/iCode-$(Build.BuildNumber)-x86_64.AppImage.zsync'
     artifact: 'iCode.AppImage'
