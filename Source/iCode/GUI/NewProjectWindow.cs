@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -64,6 +65,9 @@ namespace iCode.GUI
 
 				Console.WriteLine(_iconView.PathIsSelected(((ListStore)_iconView.Model).GetPath(temp)).ToString());
 				SelectedTemplatePath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/templates/" + ((string) ((ListStore)_iconView.Model).GetValue(temp, 1)) + ".zip");
+				if (!File.Exists(SelectedTemplatePath))
+					SelectedTemplatePath = System.IO.Path.Combine(Program.UserDefinedTemplatesPath, ((string) ((ListStore)_iconView.Model).GetValue(temp, 1)) + ".zip");
+
 				Console.WriteLine(SelectedTemplatePath);
 				Respond(ResponseType.Ok);
 				this.Dispose();
@@ -85,11 +89,19 @@ namespace iCode.GUI
 
 			_iconView.SelectionMode = SelectionMode.Single;
 
+			List<string> templates = new List<string>();
 			foreach (var file in from f in Directory.GetFiles(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/templates/")) where f.EndsWith(".zip", StringComparison.CurrentCultureIgnoreCase) select f)
 			{
 				store.AppendValues(IconLoader.LoadIcon(this, "gtk-file", IconSize.Dialog), System.IO.Path.GetFileNameWithoutExtension(file));
+				templates.Add(System.IO.Path.GetFileNameWithoutExtension(file));
 			}
 
+			foreach (var file in from f in Directory.GetFiles(Program.UserDefinedTemplatesPath) where f.EndsWith(".zip", StringComparison.CurrentCultureIgnoreCase) select f)
+			{
+				if (!templates.Contains(System.IO.Path.GetFileNameWithoutExtension(file)))
+					store.AppendValues(IconLoader.LoadIcon(this, "gtk-file", IconSize.Dialog), System.IO.Path.GetFileNameWithoutExtension(file));
+			}
+			
 			store.SetSortColumnId(2, SortType.Ascending);
 
 			_iconView.Model = store;

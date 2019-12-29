@@ -18,6 +18,7 @@ namespace iCode
 			Console.WriteLine("Initialized output.");
 			try
 			{
+				Directory.CreateDirectory(UserDefinedTemplatesPath);
 				Log.SetDefaultHandler(new LogFunc((domain, level, message) =>
 				{
 					if (level != LogLevelFlags.Error && level != LogLevelFlags.FlagFatal)
@@ -42,6 +43,9 @@ namespace iCode
 		}
 
 		public static readonly string ConfigPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "iCode/");
+		public static readonly string SDKPath = System.IO.Path.Combine(Program.ConfigPath, "SDK/");
+		public static readonly string DeveloperPath = System.IO.Path.Combine(Program.ConfigPath, "developer/");
+		public static readonly string UserDefinedTemplatesPath = System.IO.Path.Combine(Program.ConfigPath, "templates/");
 
 		public static MainWindow WinInstance;
 	}

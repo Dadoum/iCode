@@ -253,6 +253,12 @@ namespace iCode.Projects
 
 		public static bool BuildProject()
 		{
+			if (!Directory.Exists(Program.SDKPath) || !Directory.EnumerateFileSystemEntries(Program.SDKPath).Any())
+			{
+				Extensions.ShowMessage(MessageType.Error, "Cannot build application", "SDK path is empty, add SDK to " + Program.SDKPath);
+				return false;
+			}
+			
 			var cachedir = Path.Combine(Project.Path, ".icode");
 
 			if (Directory.Exists(cachedir))
@@ -304,9 +310,10 @@ namespace iCode.Projects
 
 		public static bool SignIpa(string path)
 		{
-			if (!File.Exists(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/developer/key.pem")))
+			if (!File.Exists(Path.Combine(Program.DeveloperPath, "key.pem")))
 			{
-				Extensions.ShowMessage(MessageType.Error, "Cannot codesign application", "No certificate found in ./tools/developer/.\nRead README for information about how to place them,\n and run ./tools/helper/gen-certs to generate certificates.\n The syntax is:\ngen-certs apple-id app-only-password device-udid \nNote: the device udid i can be automatically retrieved\n if your device is connected to the computer and\n if you trusted the computer.");
+				File.Copy(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/developer/readme"), Path.Combine(Program.DeveloperPath, "readme"), true);
+				Extensions.ShowMessage(MessageType.Error, "Cannot codesign application", "No certificate found in " +  Program.DeveloperPath + ".\nRead README for information about how to place them.");
 				return false;
 			}
 
