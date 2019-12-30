@@ -1,6 +1,6 @@
 #!/bin/bash
 mkdir -p ./AppDir/usr/bin
-cp -r ./bin/Debug/netcoreapp3.0/linux-x64/* ./AppDir/usr/bin/
+cp -r ./bin/Debug/netcoreapp3.0/linux-x64/publish/* ./AppDir/usr/bin/
 touch ./AppDir/AppRun
 echo "#!/bin/sh" >> ./AppDir/AppRun
 echo "HERE=\"\$(dirname \"\$(readlink -f \"\${0}\")\")\"" >> ./AppDir/AppRun

@@ -82,9 +82,6 @@
     <None Remove="readme.md" />
     <None Remove="iCode.csproj.DotSettings" />
     <None Remove="iCode-x86_64.AppImage.zsync" />
-    <None Update="Updater-old">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Update="Updater">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

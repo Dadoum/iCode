@@ -182,13 +182,17 @@ namespace iCode.Utils
 			proc.StartInfo.FileName = process;
 			proc.StartInfo.UseShellExecute = false;
 			proc.StartInfo.RedirectStandardOutput = true;
-            
+			proc.StartInfo.RedirectStandardError = true;
 			var outputBuilder = new StringBuilder();
 			proc.OutputDataReceived += delegate(object sender, DataReceivedEventArgs e)
 			{
 				outputBuilder.Append(e.Data);
 			};
             
+			proc.ErrorDataReceived += delegate(object sender, DataReceivedEventArgs e)
+			{
+				outputBuilder.Append(e.Data);
+			};
 			proc.Start();
 			proc.BeginOutputReadLine();
 			proc.WaitForExit();

@@ -37,7 +37,7 @@ steps:
 
 - task: ArchiveFiles@2
   inputs:
-    rootFolderOrFile: '$(Pipeline.Workspace)/s/bin/Debug/netcoreapp3.0'
+    rootFolderOrFile: '$(Pipeline.Workspace)/s/bin/Debug/netcoreapp3.0/linux-x64/publish'
     includeRootFolder: false
     archiveType: 'tar'
     archiveFile: '$(Pipeline.Workspace)/s/iCode.tar.gz'
