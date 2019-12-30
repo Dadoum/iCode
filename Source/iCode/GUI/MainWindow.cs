@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Gdk;
@@ -71,6 +72,8 @@ namespace iCode.GUI
 		private global::Gtk.MenuItem _buildProjectAction;
 		[UI]
 		private global::Gtk.MenuItem _layoutAction;
+		[UI]
+		private global::Gtk.MenuBar _menuBar;
 		[UI]
 		private global::Gtk.Button _button6;
 		[UI]
@@ -222,6 +225,50 @@ namespace iCode.GUI
 				}
 
 				_layoutAction.Submenu = menu;
+				
+				if (Program.UpdateAvailable)
+				{
+					var updateMenu = new MenuItem();
+					var itemMenu = new Menu();
+					var item = new MenuItem();
+					
+					updateMenu.Label = "Update iCode in background";
+					updateMenu.Activated += (sender, args) =>
+					{
+						Gtk.Application.Invoke((o, a) =>
+						{
+							itemMenu.Remove(updateMenu);
+							item.Label = "Update in progress...";
+						});
+						
+						Task.Factory.StartNew(() =>
+						{
+							var outp = iCode.Utils.Extensions.LaunchProcess(
+								System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
+									"Updater"), $"\"{Program.AppImagePath}\"", out int ret);
+							if (ret == 0)
+							{
+								Gtk.Application.Invoke((o, a) =>
+								{
+									item.Label = "Update completed.";
+								});
+							}
+							else
+							{
+								Gtk.Application.Invoke((o, a) =>
+								{
+									item.Label = "Update failed.";
+								});
+							}
+						});
+					};
+
+					itemMenu.Append(updateMenu);
+					item.Label = "Update available";
+					
+					item.Submenu = itemMenu;
+					_menuBar.Append(item);
+				}
 				
 				_statusBox.ButtonPressEvent += (o, args) =>
 				{

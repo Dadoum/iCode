@@ -13,7 +13,7 @@
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <child>
-          <object class="GtkMenuBar">
+          <object class="GtkMenuBar" id="_menuBar">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <child>

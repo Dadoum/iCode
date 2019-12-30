@@ -173,7 +173,9 @@ namespace iCode.Utils
 			return proc;
 		}
 
-		public static string LaunchProcess(string process, string arguments)
+		public static string LaunchProcess(string process, string arguments) => LaunchProcess(process, arguments, out _);
+
+		public static string LaunchProcess(string process, string arguments, out int ret)
 		{
 			var proc = new Process();
 			proc.StartInfo.Arguments = arguments;
@@ -191,7 +193,7 @@ namespace iCode.Utils
 			proc.BeginOutputReadLine();
 			proc.WaitForExit();
 			proc.CancelOutputRead();
-            
+			ret = proc.ExitCode;
 			var str = outputBuilder.ToString();
 			// Console.WriteLine($"process:{process} args:{arguments} stdout:\n{str}");
 			
