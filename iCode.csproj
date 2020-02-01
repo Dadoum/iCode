@@ -7,6 +7,7 @@
     <AssemblyName>iCode</AssemblyName>
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <PublishReadyToRun>true</PublishReadyToRun>
   </PropertyGroup>
   <PropertyGroup>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -31,7 +32,13 @@
     <WarningLevel>4</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
   <ItemGroup>
+    <Reference Include="appimage, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>lib\appimage.dll</HintPath>
+    </Reference>
     <Reference Include="atk-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>lib\atk-sharp.dll</HintPath>
     </Reference>
@@ -43,9 +50,6 @@
     </Reference>
     <Reference Include="gdl-sharp, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>lib\gdl-sharp.dll</HintPath>
-    </Reference>
-    <Reference Include="generated, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\..\Téléchargements\generated.dll</HintPath>
     </Reference>
     <Reference Include="gio-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>lib\gio-sharp.dll</HintPath>
@@ -68,21 +72,32 @@
     <Reference Include="gtksourceview3-sharp">
       <HintPath>lib\gtksourceview3-sharp.dll</HintPath>
     </Reference>
-    <Reference Include="pango-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>lib\pango-sharp.dll</HintPath>
-    </Reference>
     <Reference Include="gtksourceview3-sharp">
       <HintPath>lib\gtksourceview3-sharp.dll</HintPath>
+    </Reference>
+    <Reference Include="pango-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>lib\pango-sharp.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
     <None Remove="azure-pipelines.yml" />
     <None Remove=".gitignore" />
     <None Remove=".gitattributes" />
-    <None Remove="readme.md" />
     <None Remove="iCode.csproj.DotSettings" />
     <None Remove="iCode-x86_64.AppImage.zsync" />
     <None Update="Updater">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="natives\libclang.so">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="natives\libStd-symbols.so">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="natives\libappimage.so">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="libgdl-3.so">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
@@ -141,5 +156,12 @@
      <EmbeddedResource Include="resources\forms\InputWindow.ui">
       <LogicalName>Input</LogicalName>
     </EmbeddedResource>
+     <None Remove="resources\forms\SettingsWindow.ui" />
+     <EmbeddedResource Include="resources\forms\SettingsWindow.ui">
+     <LogicalName>Settings</LogicalName>
+     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Documents\libnotify.net-master\libnotify.net.csproj" />
   </ItemGroup>
 </Project>

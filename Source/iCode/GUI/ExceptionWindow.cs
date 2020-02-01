@@ -46,7 +46,7 @@ namespace iCode.GUI
 			DeleteEvent += delegate {
 				Gtk.Application.Quit();
 			};
-			_quitButton.Activated += (sender, e) => {
+			_quitButton.Clicked += (sender, e) => {
 				Gtk.Application.Quit();
 			};
 			Console.WriteLine("from {0}: {1}", new StackTrace().GetFrame(1).GetMethod().ReflectedType.Name, ex);

@@ -1,21 +1,19 @@
 ﻿# iCode [![Build Status](https://dev.azure.com/DadoumDev/iCode/_apis/build/status/Dadoum.iCode?branchName=master)](https://dev.azure.com/DadoumDev/iCode/_build/latest?definitionId=1&branchName=master)
-iCode is a complex heavyweight unreliable iOS IDE for Linux.
+iCode is a work-in-progress IDE to build simple iOS
 
 **Actually, the script that generates certificates is broken. I investigate Apple's server API to fix this issue. In the meantime, you can generate certificates elsewhere and put it in the developer folder like the ReadMe file says.**
 
 ## How do I run it ?
-iCode requires ~~`mono-runtime`, `gtk-sharp3`,~~ `libgdl-3-5`, `xcb` and `clang` *
+iCode does requires `libclang`*
 
-These packages can be installed with APT using this command:
+This package can be installed with APT using this command:
 
-`sudo apt install mono-runtime gtk-sharp3 libgdl-3-5 clang`
+`sudo apt install libclang`
 
 ## What can I do with iCode ?
 Build simple iOS apps in Objective-C, without storyboard and some features. It generates signed ipas (thanks to [zsign](https://github.com/zhlynn/zsign)) that can be installed on device with ideviceinstaller. Without any mac !
+Also, you can use some utils like `ibtool` to use these functions
 
-*Utility of each package:
- - `mono-runtime` was here before to use .NET Framework on Linux, but iCode do not use .NET framework anymore
- - `gtk-sharp3` was here to ensure binding of gtk for c#, but our package does not requires these glue libraries anymore.
- - `libgdl-3-5` is a docking library for GTK. It permits to its binding gdl-sharp to run.
- - `xcb` iCode crashes on project creation without it.  
- - `clang` is the compiler. 
+*iCode may crash on project creation; if it is the case, install `xcb` package to fix that. 
+
+In addition, in some distribution, `libclang` is not bundled with `clang`; if so, install it.

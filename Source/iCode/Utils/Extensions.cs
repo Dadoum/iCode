@@ -11,6 +11,7 @@ using Gtk;
 using iCode;
 using iCode.GUI;
 using iCode.GUI.Tabs;
+using NClang;
 using Pango;
 
 namespace iCode.Utils
@@ -58,17 +59,17 @@ namespace iCode.Utils
 					tabWidget.GetLabel().CloseClicked += delegate
 					{
 						notebook.RemovePage(notebook.PageNum(notebook.Children.First(x => x == scrolledWindow)));
-						Extensions.Tabs.Remove(str);
+						Tabs.Remove(str);
 					};
 				}
 				else
 				{
 					NotebookTabLabel notebookTabLabel = new NotebookTabLabel(str, widget);
 
-					notebookTabLabel.CloseClicked += delegate (object obj, EventArgs eventArgs)
+					notebookTabLabel.CloseClicked += delegate
 					{
 						notebook.RemovePage(notebook.PageNum(notebook.Children.First(x => x == scrolledWindow)));
-						Extensions.Tabs.Remove(str);
+						Tabs.Remove(str);
 					};
 					notebook.AppendPage(scrolledWindow, notebookTabLabel);
 					notebookTabLabel.ShowAll();
@@ -150,12 +151,35 @@ namespace iCode.Utils
 			return IconLoader.LoadIcon(Program.WinInstance, "gtk-file", IconSize.Menu);
 		}
 
-		public static void ShowMessage(MessageType type, string title, string message, Gtk.Window parent = null)
+		public static Gdk.Color RgbaFromHex(string s)
 		{
-			MessageDialog md = new MessageDialog(parent, DialogFlags.DestroyWithParent, type, ButtonsType.Ok, true, message);
-			md.Title = title;
-			md.Run();
-			md.Dispose();
+			if (s.StartsWith ("#"))
+				s = s.Substring (1);
+			if (s.Length == 3)
+				s = "" + s[0]+s[0]+s[1]+s[1]+s[2]+s[2];
+			ushort r = Convert.ToUInt16(ushort.Parse (s.Substring (0,2), System.Globalization.NumberStyles.HexNumber) * 255);
+			ushort g = Convert.ToUInt16(ushort.Parse (s.Substring (2,2), System.Globalization.NumberStyles.HexNumber) * 255);
+			ushort b = Convert.ToUInt16(ushort.Parse (s.Substring (4,2), System.Globalization.NumberStyles.HexNumber) * 255);
+			return new Gdk.Color()
+			{
+				Red = r,
+				Green = g,
+				Blue = b
+			};
+		}
+		
+		public static MessageDialog ShowMessage(MessageType type, string title, string message, Gtk.Window parent = null)
+		{
+			MessageDialog md = null;
+			Gtk.Application.Invoke((o, a) =>
+			{
+				md = new MessageDialog(parent, DialogFlags.Modal, type, ButtonsType.Ok, true, message);
+				md.Title = title;
+				md.Run();
+				md.Dispose();
+			});
+			
+			return md;
 		}
 
 		public static Process GetProcess(string process, string arguments)
@@ -175,7 +199,7 @@ namespace iCode.Utils
 
 		public static string LaunchProcess(string process, string arguments) => LaunchProcess(process, arguments, out _);
 
-		public static string LaunchProcess(string process, string arguments, out int ret)
+		public static string LaunchProcess(string process, string arguments, out int? ret, bool wait = true)
 		{
 			var proc = new Process();
 			proc.StartInfo.Arguments = arguments;
@@ -195,12 +219,17 @@ namespace iCode.Utils
 			};
 			proc.Start();
 			proc.BeginOutputReadLine();
-			proc.WaitForExit();
-			proc.CancelOutputRead();
-			ret = proc.ExitCode;
+			if (wait)
+			{
+				proc.WaitForExit();
+				proc.CancelOutputRead();
+				ret = proc.ExitCode;
+			}
+			else 
+				ret = null;
+			
 			var str = outputBuilder.ToString();
 			// Console.WriteLine($"process:{process} args:{arguments} stdout:\n{str}");
-			
 			return str;
 		}
 

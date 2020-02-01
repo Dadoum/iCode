@@ -22,11 +22,13 @@ namespace iCode.Projects
 		public static Project Project;
 		public static string[] Flags = 
 		{ 
-			"-target " + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/target/arm64-apple-darwin14"),
-			"-x objective-c",
-			"-arch arm64",
-			"-isysroot " + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/sdk"),
-			"-fmodules"
+			"-target", Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/target/arm64-apple-darwin14"),
+			"-x","objective-c",
+			"-arch", "arm64",
+			"--sysroot", Program.SDKPath,
+			"-std=c11", 
+			"-I", "/usr/lib/clang/9.0.0/include/" 
+			// "-fmodules"
 		};
 
 
@@ -101,7 +103,7 @@ namespace iCode.Projects
 						break;
 
 					case 2:
-						Process.Start("gio", "open '" + Path.Combine(Path.GetDirectoryName(file), "Resources", (string)treeStore.GetValue(treeIter, 1)) + "'");
+						Extensions.LaunchProcess("gio", "open \"" + Path.Combine(Path.GetDirectoryName(file), "Resources", (string)treeStore.GetValue(treeIter, 1)) + "\"", out _, false);
 						break;
 				}
 			});
@@ -253,12 +255,13 @@ namespace iCode.Projects
 
 		public static bool BuildProject()
 		{
+			Console.WriteLine("Building application...");
 			if (!Directory.Exists(Program.SDKPath) || !Directory.EnumerateFileSystemEntries(Program.SDKPath).Any())
 			{
+				Console.WriteLine("Unable to build application, no SDK was provided.");
 				Extensions.ShowMessage(MessageType.Error, "Cannot build application", "SDK path is empty, add SDK to " + Program.SDKPath);
 				return false;
 			}
-			
 			var cachedir = Path.Combine(Project.Path, ".icode");
 
 			if (Directory.Exists(cachedir))

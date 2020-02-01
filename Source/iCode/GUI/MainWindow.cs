@@ -11,6 +11,7 @@ using Gdl;
 using Gtk;
 using iCode.GUI.Panels;
 using iCode.Projects;
+using Newtonsoft.Json.Linq;
 using UI = Gtk.Builder.ObjectAttribute;
 
 namespace iCode.GUI
@@ -73,7 +74,9 @@ namespace iCode.GUI
 		[UI]
 		private global::Gtk.MenuItem _layoutAction;
 		[UI]
-		private global::Gtk.MenuBar _menuBar;
+		private global::Gtk.MenuItem _settingsAction;
+		// [UI] // Not necessary actually
+		// private global::Gtk.MenuBar _menuBar;
 		[UI]
 		private global::Gtk.Button _button6;
 		[UI]
@@ -119,7 +122,7 @@ namespace iCode.GUI
 				CodeWidget.AddWelcomeTab(string.Format("Welcome to {0} !", Names.ApplicationName));
 				dockItem.Add(this.GetCodePane());
 				dockItem.ShowAll();
-
+				
 				DockItem dockItem4 = new DockItem("outputConsole", "Output", Stock.Execute, 0);
 				this._dock.AddItem(dockItem4, DockPlacement.Bottom);
 				dockItem4.Add(_outputWidget);
@@ -143,9 +146,13 @@ namespace iCode.GUI
 					Task.Factory.StartNew(() =>
 					{
 						if (ProjectManager.BuildProject())
-							StateLabel.Text = "Build succeeded.";
+						{
+							Gtk.Application.Invoke((o, a) => { StateLabel.Text = "Build succeeded."; });
+						}
 						else
-							StateLabel.Text = "Build failed.";
+						{
+							Gtk.Application.Invoke((o, a) => { StateLabel.Text = "Build failed."; });
+						}
 					});
 				};
 				this._aboutICodeAction.Activated += (sender, e) => { AboutWindow.Create().ShowAll(); };
@@ -172,7 +179,7 @@ namespace iCode.GUI
                 }
                 ");
 				var layoutFile = System.IO.Path.Combine(Program.ConfigPath, "Layouts.xml");
-
+				
 				if (!File.Exists(layoutFile))
 				{
 					_layout.SaveLayout("default_layout");
@@ -199,8 +206,9 @@ namespace iCode.GUI
 					_layout.SaveLayout(input.Text);
 					var menuItem = new MenuItem();
 					menuItem.Label = input.Text;
-					menuItem.Activated += (o, a) => { _layout.LoadLayout(input.Text); };
+					menuItem.Activated += (ou, au) => { _layout.LoadLayout(input.Text); };
 					menu.Append(menuItem);
+					_layout.SaveToFile(layoutFile);
 				};
 				menu.Append(saveItem);
 				
@@ -226,50 +234,6 @@ namespace iCode.GUI
 
 				_layoutAction.Submenu = menu;
 				
-				if (Program.UpdateAvailable)
-				{
-					var updateMenu = new MenuItem();
-					var itemMenu = new Menu();
-					var item = new MenuItem();
-					
-					updateMenu.Label = "Update iCode in background";
-					updateMenu.Activated += (sender, args) =>
-					{
-						Gtk.Application.Invoke((o, a) =>
-						{
-							itemMenu.Remove(updateMenu);
-							item.Label = "Update in progress...";
-						});
-						
-						Task.Factory.StartNew(() =>
-						{
-							var outp = iCode.Utils.Extensions.LaunchProcess(
-								System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
-									"Updater"), $"\"{Program.AppImagePath}\"", out int ret);
-							if (ret == 0)
-							{
-								Gtk.Application.Invoke((o, a) =>
-								{
-									item.Label = "Update completed.";
-								});
-							}
-							else
-							{
-								Gtk.Application.Invoke((o, a) =>
-								{
-									item.Label = "Update failed.";
-								});
-							}
-						});
-					};
-
-					itemMenu.Append(updateMenu);
-					item.Label = "Update available";
-					
-					item.Submenu = itemMenu;
-					_menuBar.Append(item);
-				}
-				
 				_statusBox.ButtonPressEvent += (o, args) =>
 				{
 					// Here it will redirect to the future error pane, but I need to fix signing first
@@ -279,8 +243,61 @@ namespace iCode.GUI
 				_progressbar1.StyleContext.AddProvider(nopad, 1);
 				_createProjectAction.Activated += CreateProject;
 				_openProjectAction.Activated += LoadProjectActivated;
-				// var b = layout.LoadFromFile(System.IO.Path.Combine(Program.ConfigPath, "layouts/saved.layout"));
-				// Console.WriteLine("Fail or success ? It's " + b + " !");
+
+				_settingsAction.Activated += (o, a) => { SettingsWindow.Create().Run(); };
+
+				// Old update system
+				/*if (Program.UpdateAvailable)
+				{
+					var jobj = JObject.Parse(File.ReadAllText(Program.SettingsPath));
+
+					var updateMenu = new MenuItem();
+					var itemMenu = new Menu();
+					var item = new MenuItem();
+
+					void EventHandler(object sender, EventArgs args)
+					{
+						Task.Factory.StartNew(() =>
+						{
+							var outp = iCode.Utils.Extensions.LaunchProcess(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly()
+																													 .Location), "Updater"), $"\"{Program.AppImagePath}\"", out int? ret);
+							if (ret == 0)
+							{
+								Gtk.Application.Invoke((o, a) => { item.Label = "Update completed."; });
+							}
+							else
+							{
+								Gtk.Application.Invoke((o, a) => { item.Label = "Update failed."; });
+							}
+						});
+					}
+
+					if ((bool) jobj["updateConsent"]["autoInstall"])
+					{
+						item.Label = "Update in progress...";
+						_menuBar.Append(item);
+						EventHandler(null, null);
+						return;
+					}
+					
+					updateMenu.Label = "Update iCode in background";
+					updateMenu.Activated += (sender, args) =>
+					{
+						Gtk.Application.Invoke((o, a) =>
+						{
+							itemMenu.Remove(updateMenu);
+							item.Label = "Update in progress...";
+						});
+					};
+					updateMenu.Activated += EventHandler;
+
+					itemMenu.Append(updateMenu);
+					item.Label = "Update available";
+					
+					item.Submenu = itemMenu;
+					_menuBar.Append(item);
+				}*/
+				// DO NOT WRITE ANYTHING THERE
 			}
 			catch (Exception e)
 			{
@@ -307,7 +324,7 @@ namespace iCode.GUI
 
 		protected void OnDeleteEvent(object sender, DeleteEventArgs a)
 		{
-			var layoutFile = System.IO.Path.Combine(Program.ConfigPath, "layouts.xml");
+			var layoutFile = System.IO.Path.Combine(Program.ConfigPath, "Layouts.xml");
 			_layout.SaveToFile(layoutFile);
 			Gtk.Application.Quit();
 			a.RetVal = true;
