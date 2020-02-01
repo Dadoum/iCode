@@ -16,7 +16,7 @@ using iMobileDevice.MobileBackup2;
 using Newtonsoft.Json.Linq;
 using Action = Gtk.Action;
 using Extensions = iCode.Utils.Extensions;
-using Notification = Notify.Notification;
+using Notification = iCode.Native.Notify.Notification;
 using Process = GLib.Process;
 using Task = System.Threading.Tasks.Task;
 
@@ -247,14 +247,18 @@ namespace iCode
 						notification.Show();
 					}
 
-					if (progress == 1)
+					if ((int) progress == 1)
 						break;
 				}
 				
 				Console.WriteLine("Installing update...");
 
 				while (!updater.IsDone) ;
+				
+				// updater.
+				
 				notification.Close();
+				
 				
 				Notification n = new Notification(Names.ApplicationName,
 					$"{Names.ApplicationName} finished to update to {UpdateInfo["tag_name"]}",

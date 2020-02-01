@@ -161,7 +161,4 @@
      <LogicalName>Settings</LogicalName>
      </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\Documents\libnotify.net-master\libnotify.net.csproj" />
-  </ItemGroup>
 </Project>
