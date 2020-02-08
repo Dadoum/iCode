@@ -4,12 +4,13 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Reflection;
-using appimage.Appimage.Update;
 using Gdk;
 using Gdl;
 using GLib;
 using Gtk;
 using iCode.GUI;
+using iCode.Native.Appimage.Updater;
+using iCode.Settings;
 using iCode.Utils;
 using iMobileDevice;
 using iMobileDevice.MobileBackup2;
@@ -50,7 +51,7 @@ namespace iCode
 				Directory.CreateDirectory(SDKPath);
 				Directory.CreateDirectory(DeveloperPath);
 				Directory.CreateDirectory(UserDefinedTemplatesPath);
-
+				
 				Gtk.Application.Init();
 				
 				// Prevent the 1000203000 warnings of GTK
@@ -66,7 +67,8 @@ namespace iCode
 
 				if (!File.Exists(SettingsPath))
 				{
-					InitializeSettings();
+					Settings = new SettingsManager(SettingsPath);
+					Settings.InitializeSettings();
 				}
 				else
 				{
@@ -81,7 +83,7 @@ namespace iCode
 					{
 						// This permits to avoid compatibility breaking changes;
 						// when format is higher, iCode will not crash and will just ignore the file and warns the user
-						if ((int) settings["format"] > 2)
+						if ((int) settings["format"] > SettingsManager.LatestFormatSupported)
 						{
 							MessageDialog md = new MessageDialog(null, DialogFlags.Modal, MessageType.Error,
 								ButtonsType.YesNo, true,
@@ -97,7 +99,6 @@ namespace iCode
 							if (outp == (int) ResponseType.Yes)
 							{
 								SettingsPath = Path.GetTempFileName();
-								InitializeSettings();
 							}
 							else
 							{
@@ -105,28 +106,10 @@ namespace iCode
 							}
 						}
 					}
-					else
-					{
-						// Convertion from 1 to 2
-						if (updateConsent.Type == JTokenType.Boolean)
-						{
-							Console.WriteLine("Converting settings format from 1");
-							var accept = (bool) settings["updateConsent"];
-							settings.Remove("updateConsent");
-							settings.Add(new JProperty("updateConsent",
-								new JObject(new JProperty("checkUpdates", accept),
-									new JProperty("autoInstall", false))));
-							settings.Add("format", 2);
-							File.WriteAllText(SettingsPath, settings.ToString());
-						}
-						// Conversion from 1.99 to 2 
-						else
-						{
-							settings.Add("format", 2);
-							File.WriteAllText(SettingsPath, settings.ToString());
-						}
-					}
 
+					Settings = new SettingsManager(SettingsPath);
+					Settings.InitializeSettings();
+					
 					// Check for permission to search updates and verify if running in AppImage
 					if (!string.IsNullOrWhiteSpace(AppImagePath) &&
 					    (bool) settings["updateConsent"]["checkUpdates"])
@@ -208,21 +191,6 @@ namespace iCode
 			}
 		}
 
-		private static void InitializeSettings()
-		{
-			var startup = StartupWindow.Create();
-			if ((ResponseType) startup.Run() != ResponseType.Ok)
-				Environment.Exit(1);
-
-			var jobj = new JObject();
-			jobj.Add(new JProperty("updateConsent",
-				new JObject(new JProperty("checkUpdates", startup.Accepted),
-					new JProperty("autoInstall", false))));
-			jobj.Add(new JProperty("format", 2));
-			File.WriteAllText(SettingsPath, jobj.ToString());
-			Console.WriteLine("Initialized settings file.");
-		}
-
 		public static void Update(Updater updater)
 		{
 			// Show notification informing to user that we are updating
@@ -246,34 +214,45 @@ namespace iCode
 						notification.SetHint("value", new Variant((int) (progress * 100)));
 						notification.Show();
 					}
-
+					
 					if ((int) progress == 1)
 						break;
 				}
 				
 				Console.WriteLine("Installing update...");
-
+				
 				while (!updater.IsDone) ;
 				
-				// updater.
+				Console.WriteLine(!updater.HasError ? "Update done !" : "Update failed.");
+
+				while (updater.NextStatusMessage(out string message) && !string.IsNullOrEmpty(message))
+					Console.WriteLine(message);
+				
+				if (updater.HasError)
+					updater.RestoreOriginalFile();
 				
 				notification.Close();
-				
-				
+
 				Notification n = new Notification(Names.ApplicationName,
-					$"{Names.ApplicationName} finished to update to {UpdateInfo["tag_name"]}",
+					updater.HasError ? $"{Names.ApplicationName} failed to update to {UpdateInfo["tag_name"]}, the original file has been restored." : $"{Names.ApplicationName} finished to update to {UpdateInfo["tag_name"]}",
 					15000);
+				
 				n.SetIconFromPixbuf(
 					Pixbuf.LoadFromResource("iCode.resources.images.icon.png"));
-				n.AddAction("click", "Restart",
-					((ptr, action, data) =>
-					{
-						System.Diagnostics.Process.Start(AppImagePath);
-						Environment.Exit(0);
-					}));
-				n.Show();
 				
-				Console.WriteLine("Update finished !");
+				if (!updater.HasError)
+					n.AddAction("click", "Restart",
+						(ptr, action, data) =>
+						{
+							Console.WriteLine(AppImagePath);
+							string tempFile = Path.GetTempFileName();
+							File.Move(AppImagePath, tempFile, true);
+							File.Move(tempFile, AppImagePath, true);
+							System.Diagnostics.Process.Start(AppImagePath);
+							Environment.Exit(0);
+						});
+				
+				n.Show();
 			}
 			else
 			{
@@ -291,6 +270,7 @@ namespace iCode
 		public static readonly string AppImagePath = Environment.GetEnvironmentVariable("APPIMAGE");
 		
 		public static string SettingsPath = System.IO.Path.Combine(Program.ConfigPath, "Settings.json");
+		public static SettingsManager Settings;
 
 		public static bool UpdateAvailable = false;
 		public static JObject UpdateInfo;

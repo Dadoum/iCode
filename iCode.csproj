@@ -8,6 +8,7 @@
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <PublishReadyToRun>true</PublishReadyToRun>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -36,9 +37,6 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="appimage, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>lib\appimage.dll</HintPath>
-    </Reference>
     <Reference Include="atk-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>lib\atk-sharp.dll</HintPath>
     </Reference>
