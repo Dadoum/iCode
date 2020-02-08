@@ -1,0 +1,67 @@
+# Build and run tests for .NET Desktop or Windows classic desktop solutions.
+# Add steps that publish symbols, save build artifacts, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/apps/windows/dot-net
+
+trigger:
+- develop
+
+name: '$(Date:yyyy.MM.dd)$(Rev:.r)'
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  solution: '**/*.sln'
+  buildPlatform: 'x86'
+  buildConfiguration: 'Release'
+
+steps:
+- task: CmdLine@2
+  inputs:
+    script: '$(Pipeline.Workspace)/s/AssemblyGenerator.sh $(Build.BuildNumber)'
+
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'publish'
+    publishWebProjects: false
+    projects: '**/*.csproj'
+    zipAfterPublish: false
+    arguments: '--configuration Debug -r linux-x64 --self-contained true'
+    modifyOutputPath: false
+
+- task: CopyFiles@2
+  inputs:
+    SourceFolder: '$(Pipeline.Workspace)/s/tools'
+    Contents: '**'
+    TargetFolder: '$(Pipeline.Workspace)/s/bin/Debug/netcoreapp3.0/linux-x64/publish/tools'
+
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: '$(Pipeline.Workspace)/s/bin/Debug/netcoreapp3.0/linux-x64/publish'
+    includeRootFolder: false
+    archiveType: 'tar'
+    archiveFile: '$(Pipeline.Workspace)/s/iCode.tar.gz'
+    replaceExistingArchive: true
+
+- task: PublishPipelineArtifact@1
+  inputs:
+    targetPath: '$(Pipeline.Workspace)/s/iCode.tar.gz'
+    artifact: 'iCode.tar.gz'
+    publishLocation: 'pipeline'
+
+- task: CmdLine@2
+  inputs:
+    script: 'bash PackIntoAppImage.sh'
+    workingDirectory: '$(Pipeline.Workspace)/s/'
+
+- task: PublishPipelineArtifact@1
+  inputs:
+    targetPath: '$(Pipeline.Workspace)/s/iCode-x86_64.AppImage'
+    artifact: 'iCode.AppImage'
+    publishLocation: 'pipeline'
+
+- task: PublishPipelineArtifact@1
+  inputs:
+    targetPath: '$(Pipeline.Workspace)/s/iCode-x86_64.AppImage.zsync'
+    artifact: 'iCode.AppImage.zsync'
+    publishLocation: 'pipeline'
