@@ -33,22 +33,22 @@ namespace iCode.Settings
 
 			if (File.Exists(settingsPath) && !string.IsNullOrWhiteSpace(File.ReadAllText(settingsPath)))
 			{
-				if (settings.ContainsKey("format") && (int) settings["format"] == LatestFormatSupported)
-					return;
-
-				Console.WriteLine("Conversion required.");
-				// Convertion from 1 to 3
-				if (settings.ContainsKey("updateConsent") && settings["updateConsent"].Type == JTokenType.Boolean)
+				if (!settings.ContainsKey("format") || (int) settings["format"] != LatestFormatSupported)
 				{
-					recreationNeeded = true;
-					approvalCheck = (bool) settings["updateConsent"];
-				}
-				// Conversion from 2-like to 3
-				else
-				{
-					recreationNeeded = true;
-					approvalCheck = (bool) settings["updateConsent"]["checkUpdates"];
-					approvalInstall = (bool) settings["updateConsent"]["autoInstall"];
+					Console.WriteLine("Conversion required.");
+					// Convertion from 1 to 3
+					if (settings.ContainsKey("updateConsent") && settings["updateConsent"].Type == JTokenType.Boolean)
+					{
+						recreationNeeded = true;
+						approvalCheck = (bool) settings["updateConsent"];
+					}
+					// Conversion from 2-like to 3
+					else
+					{
+						recreationNeeded = true;
+						approvalCheck = (bool) settings["updateConsent"]["checkUpdates"];
+						approvalInstall = (bool) settings["updateConsent"]["autoInstall"];
+					}
 				}
 			}
 			else
@@ -76,6 +76,8 @@ namespace iCode.Settings
 				File.WriteAllText(settingsPath, settings.ToString());
 				Console.WriteLine("Initialized settings file.");
 			}
+			
+			Console.WriteLine("Settings loaded.");
 		}
 
 		public void AddSettingsEntry(string name, string path, JToken value)
@@ -93,7 +95,7 @@ namespace iCode.Settings
 
 		public void SetSetting(string name, JToken value)
 		{
-			var set = GetSettingsEntry(name);
+			var set = GetSetting(name);
 			((JArray) settings["settings"]).Remove(set);
 			set["value"] = value;
 			((JArray) settings["settings"]).Add(set);
@@ -102,9 +104,14 @@ namespace iCode.Settings
 		
 		public JToken GetSettingsEntry(string name)
 		{
-			return settings["settings"].First(setting => setting["name"].ToString() == name);
+			return settings["settings"].First(setting => setting["name"].ToString() == name)["value"];
 		}
 
+		public JToken GetSetting(string name)
+		{
+			return settings["settings"].First(setting => setting["name"].ToString() == name);
+		}
+		
 		public JArray GetSettings()
 		{
 			return (JArray) settings["settings"];

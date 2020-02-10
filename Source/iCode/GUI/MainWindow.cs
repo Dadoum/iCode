@@ -4,14 +4,17 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
 using System.Xml.Linq;
 using Gdk;
 using Gdl;
+using GLib;
 using Gtk;
 using iCode.GUI.Panels;
 using iCode.Projects;
 using Newtonsoft.Json.Linq;
+using Menu = Gtk.Menu;
+using MenuItem = Gtk.MenuItem;
+using Task = System.Threading.Tasks.Task;
 using UI = Gtk.Builder.ObjectAttribute;
 
 namespace iCode.GUI
@@ -75,6 +78,8 @@ namespace iCode.GUI
 		private global::Gtk.MenuItem _layoutAction;
 		[UI]
 		private global::Gtk.MenuItem _settingsAction;
+		[UI]
+		private global::Gtk.MenuItem _checkUpdates;
 		// [UI] // Not necessary actually
 		// private global::Gtk.MenuBar _menuBar;
 		[UI]
@@ -101,8 +106,8 @@ namespace iCode.GUI
 			{
 				this._builder = builder;
 				builder.Autoconnect(this);
-				this.Title = Names.ApplicationName;
-				_progressbar1.Text = Names.ApplicationName;
+				this.Title = Identity.ApplicationName;
+				_progressbar1.Text = Identity.ApplicationName;
 				CodeWidget.Initialize();
 				Box box = new Box(Orientation.Vertical, 0);
 				_dock = new Dock();
@@ -119,7 +124,7 @@ namespace iCode.GUI
 				dockItem.Grip.Hide();
 				this._dock.AddItem(dockItem, DockPlacement.Center);
 				this._dock.BorderWidth = 2u;
-				CodeWidget.AddWelcomeTab(string.Format("Welcome to {0} !", Names.ApplicationName));
+				CodeWidget.AddWelcomeTab(string.Format("Welcome to {0} !", Identity.ApplicationName));
 				dockItem.Add(this.GetCodePane());
 				dockItem.ShowAll();
 				
@@ -140,7 +145,7 @@ namespace iCode.GUI
 
 				this.DeleteEvent += OnDeleteEvent;
 				this.Add(box);
-				this.Icon = Pixbuf.LoadFromResource("iCode.resources.images.icon.png");
+				this.Icon = Identity.ApplicationIcon;
 				this._buildProjectAction.Activated += (sender, e) =>
 				{
 					Task.Factory.StartNew(() =>
@@ -161,7 +166,7 @@ namespace iCode.GUI
 				ProjectManager.AddSensitiveWidget(_button6);
 				ProjectManager.AddSensitiveWidget(_button7);
 
-				_label1.Text = Names.ApplicationName;
+				_label1.Text = Identity.ApplicationName;
 
 				this._button6.Clicked += (sender, e) => { ProjectManager.RunProject(); };
 				Gtk.CssProvider nopad = new CssProvider();
@@ -245,59 +250,10 @@ namespace iCode.GUI
 				_openProjectAction.Activated += LoadProjectActivated;
 
 				_settingsAction.Activated += (o, a) => { SettingsWindow.Create().Run(); };
-
-				// Old update system
-				/*if (Program.UpdateAvailable)
+				_checkUpdates.Activated += (o, a) =>
 				{
-					var jobj = JObject.Parse(File.ReadAllText(Program.SettingsPath));
-
-					var updateMenu = new MenuItem();
-					var itemMenu = new Menu();
-					var item = new MenuItem();
-
-					void EventHandler(object sender, EventArgs args)
-					{
-						Task.Factory.StartNew(() =>
-						{
-							var outp = iCode.Utils.Extensions.LaunchProcess(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly()
-																													 .Location), "Updater"), $"\"{Program.AppImagePath}\"", out int? ret);
-							if (ret == 0)
-							{
-								Gtk.Application.Invoke((o, a) => { item.Label = "Update completed."; });
-							}
-							else
-							{
-								Gtk.Application.Invoke((o, a) => { item.Label = "Update failed."; });
-							}
-						});
-					}
-
-					if ((bool) jobj["updateConsent"]["autoInstall"])
-					{
-						item.Label = "Update in progress...";
-						_menuBar.Append(item);
-						EventHandler(null, null);
-						return;
-					}
-					
-					updateMenu.Label = "Update iCode in background";
-					updateMenu.Activated += (sender, args) =>
-					{
-						Gtk.Application.Invoke((o, a) =>
-						{
-							itemMenu.Remove(updateMenu);
-							item.Label = "Update in progress...";
-						});
-					};
-					updateMenu.Activated += EventHandler;
-
-					itemMenu.Append(updateMenu);
-					item.Label = "Update available";
-					
-					item.Submenu = itemMenu;
-					_menuBar.Append(item);
-				}*/
-				// DO NOT WRITE ANYTHING THERE
+					Program.CheckUpdates();
+				};
 			}
 			catch (Exception e)
 			{
@@ -326,6 +282,10 @@ namespace iCode.GUI
 		{
 			var layoutFile = System.IO.Path.Combine(Program.ConfigPath, "Layouts.xml");
 			_layout.SaveToFile(layoutFile);
+			
+			if (Program.UpdateInstalled)
+				System.Diagnostics.Process.Start("killall", "appimagelauncherfs");
+			
 			Gtk.Application.Quit();
 			a.RetVal = true;
 		}

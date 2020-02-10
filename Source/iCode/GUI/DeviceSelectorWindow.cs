@@ -33,7 +33,7 @@ namespace iCode.GUI
 		{
 			this._builder = builder;
 			builder.Autoconnect(this);
-			this.Icon = Gdk.Pixbuf.LoadFromResource("iCode.resources.images.icon.png");
+			this.Icon = Identity.ApplicationIcon;
 
 			_okButton.Clicked += (sender, e) =>
 			{
@@ -48,7 +48,7 @@ namespace iCode.GUI
 				iDevice.idevice_new(out deviceHandle, (string)(_devicesList.Model as ListStore).GetValue(outp, 1)).ThrowOnError();
 
 				LockdownClientHandle lockdownHandle;
-				lockdown.lockdownd_client_new_with_handshake(deviceHandle, out lockdownHandle, Names.ApplicationName).ThrowOnError();
+				lockdown.lockdownd_client_new_with_handshake(deviceHandle, out lockdownHandle, Identity.ApplicationName).ThrowOnError();
 
 				/*PlistHandle producttype;
 				Lockdown.lockdownd_get_value(lockdownHandle, null, "ProductType", out producttype);

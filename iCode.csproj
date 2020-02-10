@@ -108,8 +108,6 @@
     <None Include="$(SolutionDir)tools\**" CopyToOutputDirectory="PreserveNewest" LinkBase="tools\" />
   </ItemGroup>
   <ItemGroup>
-    <None Remove="resources\images\icon.png" />
-    <EmbeddedResource Include="resources\images\icon.png" />
     <None Remove="resources\forms\StartupWindow.ui" />
      <EmbeddedResource Include="resources\forms\StartupWindow.ui">
       <LogicalName>Startup</LogicalName>
@@ -157,6 +155,14 @@
      <None Remove="resources\forms\SettingsWindow.ui" />
      <EmbeddedResource Include="resources\forms\SettingsWindow.ui">
      <LogicalName>Settings</LogicalName>
+     </EmbeddedResource>
+     <None Remove="resources\images\icon\1024.png" />
+     <EmbeddedResource Include="resources\images\icon\1024.png">
+       <LogicalName>iCode.resources.images.icon.png</LogicalName>
+     </EmbeddedResource>
+     <None Remove="resources\images\icon\scalable.svg" />
+     <EmbeddedResource Include="resources\images\icon\scalable.svg">
+       <LogicalName>iCode.resources.images.icon.svg</LogicalName>
      </EmbeddedResource>
   </ItemGroup>
 </Project>

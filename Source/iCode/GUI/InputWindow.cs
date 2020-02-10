@@ -26,7 +26,7 @@ namespace iCode.GUI
 		{
 			this._builder = builder;
 			builder.Autoconnect(this);			
-			this.Icon = Gdk.Pixbuf.LoadFromResource("iCode.resources.images.icon.png");
+			this.Icon = Identity.ApplicationIcon;
 
 
 			_okButton.Clicked += (sender, e) =>

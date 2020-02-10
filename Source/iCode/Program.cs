@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Reflection;
 using Gdk;
@@ -18,13 +21,28 @@ using Newtonsoft.Json.Linq;
 using Action = Gtk.Action;
 using Extensions = iCode.Utils.Extensions;
 using Notification = iCode.Native.Notify.Notification;
-using Process = GLib.Process;
 using Task = System.Threading.Tasks.Task;
+using Process = System.Diagnostics.Process;
 
 namespace iCode
 {
 	internal static class Program
 	{
+		public static readonly string ConfigPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "iCode/");
+		public static readonly string SDKPath = System.IO.Path.Combine(Program.ConfigPath, "SDK/");
+		public static readonly string DeveloperPath = System.IO.Path.Combine(Program.ConfigPath, "Developer/");
+		public static readonly string UserDefinedTemplatesPath = System.IO.Path.Combine(Program.ConfigPath, "Templates/");
+		public static readonly string AppImagePath = Environment.GetEnvironmentVariable("APPIMAGE");
+		
+		public static string SettingsPath = System.IO.Path.Combine(Program.ConfigPath, "Settings.json");
+		public static SettingsManager Settings;
+
+		public static bool UpdateAvailable;
+		public static bool UpdateInstalled;
+		public static JObject UpdateInfo;
+		
+		public static MainWindow WinInstance;
+		
 		public static int Main(string[] args)
 		{
 			// Make the console use date TODO: finish implementation
@@ -37,15 +55,15 @@ namespace iCode
 				{
 					Console.WriteLine("iCode is running outside of an AppImage.");
 					
-					Notification notification = new Notification(Names.ApplicationName,
+					Notification notification = new Notification(Identity.ApplicationName,
 						$"iCode is running outside of an AppImage.\n" +
 							 $"We do recommand running AppImage directly to benefit from updates.",
 						5000);
 					notification.SetIconFromPixbuf(
-						Pixbuf.LoadFromResource("iCode.resources.images.icon.png"));
+						Identity.ApplicationIcon);
 					notification.Show();
 				}
-
+				
 				// Create directories if they do not exist
 				Directory.CreateDirectory(ConfigPath);
 				Directory.CreateDirectory(SDKPath);
@@ -73,7 +91,6 @@ namespace iCode
 				else
 				{
 					var settings = JObject.Parse(File.ReadAllText(SettingsPath));
-					var updateConsent = settings["updateConsent"];
 					
 					// There is 3 settings format, 1, 1.99 and 2
 					// 1 uses a bool to store update consent.
@@ -111,61 +128,9 @@ namespace iCode
 					Settings.InitializeSettings();
 					
 					// Check for permission to search updates and verify if running in AppImage
-					if (!string.IsNullOrWhiteSpace(AppImagePath) &&
-					    (bool) settings["updateConsent"]["checkUpdates"])
+					if ((bool) Settings.GetSettingsEntry("check_updates"))
 					{
-						// Create a new thread
-						Task.Factory.StartNew(() =>
-						{
-							Console.WriteLine("Checking for updates...");
-							Updater updater = new Updater(AppImagePath, true);
-
-							// Checking for changes
-							updater.CheckForChanges(ref UpdateAvailable, 0);
-							
-							if (UpdateAvailable)
-							{
-								Console.WriteLine("Update available.");
-
-								// Retrieve latest version informations
-								var request =
-									(HttpWebRequest) WebRequest.Create(
-										"https://api.github.com/repos/Dadoum/iCode/releases/latest");
-								request.Method = "GET";
-								request.Headers = new WebHeaderCollection();
-								request.UserAgent =
-									$"{Names.ApplicationName}/{Assembly.GetEntryAssembly().GetName().Version}";
-								var stream = request.GetResponse().GetResponseStream();
-								var read = new StreamReader(stream);
-								var str = read.ReadToEnd();
-								read.Dispose();
-								stream.Dispose();
-								UpdateInfo = JObject.Parse(str);
-								
-								// Check if we can automatically install it
-								if (!(bool) settings["updateConsent"]["autoInstall"])
-								{
-									// Show a notification with a button to ask user if they want to update
-									Notification notification = new Notification(Names.ApplicationName,
-										$"{Names.ApplicationName} is ready to update from v{Assembly.GetEntryAssembly().GetName().Version} to {UpdateInfo["tag_name"]}",
-										15000);
-									notification.SetIconFromPixbuf(
-										Pixbuf.LoadFromResource("iCode.resources.images.icon.png"));
-									notification.AddAction("click", "Update now",
-										((ptr, action, data) => { Update(updater); }));
-									notification.Show();
-									System.Threading.Thread.Sleep(15000);
-									GC.KeepAlive(notification);
-								}
-								else
-								{
-									// The update is being downloaded and installed automatically
-									// because user consented it explicitly
-									Update(updater);
-								}
-
-							}
-						});
+						CheckUpdates();
 					}
 				}
 				
@@ -193,88 +158,187 @@ namespace iCode
 
 		public static void Update(Updater updater)
 		{
-			// Show notification informing to user that we are updating
-			Notification notification = new Notification(Names.ApplicationName,
-				$"{Names.ApplicationName} is updating from v{Assembly.GetEntryAssembly().GetName().Version} to {UpdateInfo["tag_name"]}",
-				1000000000);
-			notification.SetIconFromPixbuf(
-				Pixbuf.LoadFromResource("iCode.resources.images.icon.png"));
-			notification.Show();
-			
-			if (updater.Start())
+			new System.Threading.Thread(() =>
 			{
-				Console.WriteLine("Downloading update...");
-
-				while (!updater.IsDone)
-				{
-					double progress = 0d;
-					if (updater.Progress(ref progress))
-					{
-						// Console.WriteLine($"Update {progress * 100} % completed");
-						notification.SetHint("value", new Variant((int) (progress * 100)));
-						notification.Show();
-					}
-					
-					if ((int) progress == 1)
-						break;
-				}
-				
-				Console.WriteLine("Installing update...");
-				
-				while (!updater.IsDone) ;
-				
-				Console.WriteLine(!updater.HasError ? "Update done !" : "Update failed.");
-
-				while (updater.NextStatusMessage(out string message) && !string.IsNullOrEmpty(message))
-					Console.WriteLine(message);
-				
-				if (updater.HasError)
-					updater.RestoreOriginalFile();
-				
-				notification.Close();
-
-				Notification n = new Notification(Names.ApplicationName,
-					updater.HasError ? $"{Names.ApplicationName} failed to update to {UpdateInfo["tag_name"]}, the original file has been restored." : $"{Names.ApplicationName} finished to update to {UpdateInfo["tag_name"]}",
-					15000);
-				
-				n.SetIconFromPixbuf(
+				// Show notification informing to user that we are updating
+				Notification notification = new Notification(Identity.ApplicationName,
+					$"{Identity.ApplicationName} is updating from v{Assembly.GetEntryAssembly().GetName().Version} to {UpdateInfo["tag_name"]}",
+					1000000000);
+				notification.SetIconFromPixbuf(
 					Pixbuf.LoadFromResource("iCode.resources.images.icon.png"));
-				
-				if (!updater.HasError)
-					n.AddAction("click", "Restart",
-						(ptr, action, data) =>
+				notification.Show();
+
+				if (updater.Start())
+				{
+					Console.WriteLine("Downloading update...");
+
+					while (!updater.IsDone)
+					{
+						double progress = 0d;
+						if (updater.Progress(ref progress))
 						{
-							Console.WriteLine(AppImagePath);
-							string tempFile = Path.GetTempFileName();
-							File.Move(AppImagePath, tempFile, true);
-							File.Move(tempFile, AppImagePath, true);
-							System.Diagnostics.Process.Start(AppImagePath);
-							Environment.Exit(0);
-						});
-				
-				n.Show();
-			}
-			else
-			{
-				Console.WriteLine();
-				Console.WriteLine("Failed to update :/.");
-			}
-			
-			GC.KeepAlive(notification);
+							// Console.WriteLine($"Update {progress * 100} % completed");
+							notification.SetHint("value", new Variant((int) (progress * 100)));
+							notification.Show();
+						}
+
+						if ((int) progress == 1)
+							break;
+					}
+
+					Console.WriteLine("Installing update...");
+
+					while (!updater.IsDone) ;
+
+					Console.WriteLine(!updater.HasError ? "Update done !" : "Update failed.");
+
+					while (updater.NextStatusMessage(out string message) && !string.IsNullOrEmpty(message))
+						Console.WriteLine(message);
+
+					if (updater.HasError)
+						updater.RestoreOriginalFile();
+
+					notification.Close();
+
+					Notification n = new Notification(Identity.ApplicationName,
+						updater.HasError
+							? $"{Identity.ApplicationName} failed to update to {UpdateInfo["tag_name"]}, the original file has been restored."
+							: $"{Identity.ApplicationName} finished to update to {UpdateInfo["tag_name"]}",
+						15000);
+
+					n.SetIconFromPixbuf(
+						Pixbuf.LoadFromResource("iCode.resources.images.icon.png"));
+
+					if (!updater.HasError)
+					{
+						n.AddAction("click", "Restart",
+							(ptr, action, data) =>
+							{
+								var processes = Process.GetProcessesByName("appimagelauncherfs").First();
+								Console.WriteLine();
+
+								File.WriteAllText(Path.Combine(ConfigPath, "updater.sh"), $@"
+#!/bin/bash
+killall iCode &> /dev/null
+killall appimagelauncherfs &> /dev/null
+{Path.Combine(Environment.GetEnvironmentVariable("OWD"),
+									Directory.GetFiles(Environment.GetEnvironmentVariable("OWD")).First(x =>
+										x.EndsWith(".AppImage") && Path.GetFileName(x).StartsWith("iCode")))}
+	");
+								Process.Start("bash", Path.Combine(ConfigPath, "updater.sh"));
+
+								Environment.Exit(0);
+							});
+						UpdateInstalled = true;
+					}
+
+					n.Show();
+				}
+				else
+				{
+					Console.WriteLine();
+					Console.WriteLine("Failed to update :/.");
+				}
+
+				GC.KeepAlive(notification);
+			}).Start();
 		}
 
-		public static readonly string ConfigPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "iCode/");
-		public static readonly string SDKPath = System.IO.Path.Combine(Program.ConfigPath, "SDK/");
-		public static readonly string DeveloperPath = System.IO.Path.Combine(Program.ConfigPath, "Developer/");
-		public static readonly string UserDefinedTemplatesPath = System.IO.Path.Combine(Program.ConfigPath, "Templates/");
-		public static readonly string AppImagePath = Environment.GetEnvironmentVariable("APPIMAGE");
-		
-		public static string SettingsPath = System.IO.Path.Combine(Program.ConfigPath, "Settings.json");
-		public static SettingsManager Settings;
+		public static void CheckUpdates()
+		{
+			// Create a new thread
+			Task.Factory.StartNew(() =>
+			{
+				if (!string.IsNullOrWhiteSpace(AppImagePath))
+				{
+					Console.WriteLine("Checking for updates... (AppImage route)");
+					Updater updater = new Updater(AppImagePath, true);
 
-		public static bool UpdateAvailable = false;
-		public static JObject UpdateInfo;
-		
-		public static MainWindow WinInstance;
+					// Checking for changes
+					updater.CheckForChanges(ref UpdateAvailable, 0);
+
+					if (UpdateAvailable)
+					{
+						Console.WriteLine("Update available.");
+
+						// Retrieve latest version informations
+						var request =
+							(HttpWebRequest) WebRequest.Create(
+								"https://api.github.com/repos/Dadoum/iCode/releases/latest");
+						request.Method = "GET";
+						request.Headers = new WebHeaderCollection();
+						request.UserAgent =
+							$"{Identity.ApplicationName}/{Assembly.GetEntryAssembly().GetName().Version}";
+						var stream = request.GetResponse().GetResponseStream();
+						var read = new StreamReader(stream);
+						var str = read.ReadToEnd();
+						read.Dispose();
+						stream.Dispose();
+						UpdateInfo = JObject.Parse(str);
+
+						// Check if we can automatically install it
+						if (!(bool) Settings.GetSettingsEntry("auto_install"))
+						{
+							// Show a notification with a button to ask user if they want to update
+							Notification notification = new Notification(Identity.ApplicationName,
+								$"{Identity.ApplicationName} is ready to update from v{Assembly.GetEntryAssembly().GetName().Version} to {UpdateInfo["tag_name"]}",
+								15000);
+							notification.SetIconFromPixbuf(
+								Pixbuf.LoadFromResource("iCode.resources.images.icon.png"));
+							notification.AddAction("click", "Update now",
+								((ptr, action, data) => { Update(updater); }));
+							notification.Show();
+							System.Threading.Thread.Sleep(15000);
+							GC.KeepAlive(notification);
+						}
+						else
+						{
+							// The update is being downloaded and installed automatically
+							// because user consented it explicitly
+							Update(updater);
+						}
+
+					}
+					else
+					{
+						Console.WriteLine("iCode is up-to-date.");
+					}
+				}
+				else
+				{
+					Console.WriteLine("Checking for updates... (binaries method)");
+					// Retrieve latest version informations
+					var request =
+						(HttpWebRequest) WebRequest.Create(
+							"https://api.github.com/repos/Dadoum/iCode/releases/latest");
+					request.Method = "GET";
+					request.Headers = new WebHeaderCollection();
+					request.UserAgent =
+						$"{Identity.ApplicationName}/{Assembly.GetEntryAssembly().GetName().Version}";
+					var stream = request.GetResponse().GetResponseStream();
+					var read = new StreamReader(stream);
+					var str = read.ReadToEnd();
+					read.Dispose();
+					stream.Dispose();
+					UpdateInfo = JObject.Parse(str);
+
+					ArrayList versions = new ArrayList
+						{Assembly.GetEntryAssembly().GetName().Version.ToString(), UpdateInfo["tag_name"].ToString()};
+
+					versions.Sort();
+
+					if ((string) versions[0] == Assembly.GetEntryAssembly().GetName().Version.ToString())
+					{
+						// Show a notification to inform the user that an update is available
+						Notification notification = new Notification(Identity.ApplicationName,
+							$"New {Identity.ApplicationName} version is available. You are on v{Assembly.GetEntryAssembly().GetName().Version}, and the latest version available is {UpdateInfo["tag_name"]}.",
+							15000);
+						notification.SetIconFromPixbuf(
+							Pixbuf.LoadFromResource("iCode.resources.images.icon.png"));
+						notification.Show();
+					}
+				}
+			});
+		}
 	}
 }

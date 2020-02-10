@@ -24,14 +24,14 @@ namespace iCode.GUI
 		{
 			this._builder = builder;
 			builder.Autoconnect(this);
-			this.Icon = Gdk.Pixbuf.LoadFromResource("iCode.resources.images.icon.png");
+			this.Icon = Identity.ApplicationIcon;
 
 			_okButton.Clicked += (sender, e) =>
 			{
 				this.Dispose();
 			};
 
-			this.Title = ("About " + Names.ApplicationName);
+			this.Title = ("About " + Identity.ApplicationName);
 			this._label.LabelProp = this._label.LabelProp.Replace("VERSIONNUMBER", Assembly.GetEntryAssembly().GetName().Version.ToString());
 		}
 	}

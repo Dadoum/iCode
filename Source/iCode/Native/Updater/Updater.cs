@@ -273,7 +273,7 @@ namespace iCode.Native
                     return __ret;
                 }
 
-                public bool PathToNewFile(string path)
+                public bool PathToNewFile(ref string path)
                 {
                     var __basicString0 = new global::iCode.Native.Std.BasicString<sbyte, global::iCode.Native.Std.CharTraits<sbyte>, global::iCode.Native.Std.Allocator<sbyte>>();
                     global::iCode.Native.Std.BasicStringExtensions.Assign(__basicString0, path);

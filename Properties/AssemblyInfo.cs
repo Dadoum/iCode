@@ -5,7 +5,7 @@ using iCode;
 // Information about this assembly is defined by the following attributes. 
 // Change them to the values specific to your project.
 
-[assembly: AssemblyTitle(Names.ApplicationName)]
+[assembly: AssemblyTitle(Identity.ApplicationName)]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]

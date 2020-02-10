@@ -28,7 +28,7 @@ namespace iCode.GUI
 		{
 			this._builder = builder;
 			builder.Autoconnect(this);
-			this.Icon = Pixbuf.LoadFromResource("iCode.resources.images.icon.png");
+			this.Icon = Identity.ApplicationIcon;
 			_okButton.Clicked += (sender, e) =>
 			{
 				Accepted = _consentUpdateCheckbox.Active;

@@ -29,7 +29,7 @@ namespace iCode.GUI
 			base(handle)
 		{
 			builder.Autoconnect(this);			
-			this.Icon = Gdk.Pixbuf.LoadFromResource("iCode.resources.images.icon.png");
+			this.Icon = Identity.ApplicationIcon;
 
 			this.Parent = parent;
 			this.Title = "Exception occured";
