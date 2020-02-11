@@ -91,39 +91,14 @@ namespace iCode.GUI.Panels
 			});
 
 			p.StartInfo.UseShellExecute = false;
-			/* Don't work since switch to .NET Core
 			p.StartInfo.RedirectStandardError = p.StartInfo.RedirectStandardOutput = true;
-			
-			p.OutputDataReceived += delegate(object sender, DataReceivedEventArgs ea)
-			{
-				Console.Write(ea.Data);
-				Gtk.Application.Invoke((sender, e) =>
-				{
-					_output.Buffer.Text += ea.Data;
-				});
-			};
-			
-			var outputBuilder = new StringBuilder();
-			p.OutputDataReceived += delegate(object sender, DataReceivedEventArgs e)
-			{
-				outputBuilder.Append(e.Data);
-			};
-			
-			p.ErrorDataReceived += delegate(object sender, DataReceivedEventArgs e)
-			{
-				Console.Write(ea.Data);
-				Gtk.Application.Invoke((sender, e) =>
-				{
-					_output.Buffer.Text += ea.Data;
-				});
-				outputBuilder.Append(e.Data);
-			};*/
-			
+
 			p.Start();
 			p.WaitForExit();
 			
-			Gtk.Application.Invoke((sender, e) =>
+			Gtk.Application.Invoke((a, b) =>
 			{
+				_output.Buffer.Text += p.StandardError.ReadToEnd();
 				_output.Buffer.Text += p.StartInfo.FileName + " exited with the code " + p.ExitCode + "\n\n";
 			});
 

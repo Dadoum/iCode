@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using Gdk;
 using Gtk;
 using iCode;
@@ -190,13 +191,42 @@ namespace iCode.Utils
 			proc.StartInfo.UseShellExecute = false;
 			proc.StartInfo.RedirectStandardOutput = true;
 			proc.StartInfo.RedirectStandardError = true;
-            
+			proc.StartInfo.EnvironmentVariables.Add("LD_LIBRARY_PATH", Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location));	
 			
 			// proc.Start();
 			// Console.WriteLine(process + " " + arguments);
 			return proc;
 		}
 
+		// From SO-4680128 
+		public static IList<string> SplitWithDelims(this string s, params char[] delimiters)
+		{
+			var parts = new List<string>();
+			if (!string.IsNullOrEmpty(s))
+			{
+				int iFirst = 0;
+				do
+				{
+					int iLast = s.IndexOfAny(delimiters, iFirst);
+					if (iLast >= 0)
+					{
+						if (iLast > iFirst)
+							parts.Add(s.Substring(iFirst, iLast - iFirst)); //part before the delimiter
+						parts.Add(new string(s[iLast], 1));//the delimiter
+						iFirst = iLast + 1;
+						continue;
+					}
+
+					//No delimiters were found, but at least one character remains. Add the rest and stop.
+					parts.Add(s.Substring(iFirst, s.Length - iFirst));
+					break;
+
+				} while (iFirst < s.Length);
+			}
+
+			return parts;
+		}
+		
 		public static string LaunchProcess(string process, string arguments) => LaunchProcess(process, arguments, out _);
 
 		public static string LaunchProcess(string process, string arguments, out int? ret, bool wait = true)

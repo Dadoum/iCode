@@ -62,7 +62,7 @@
       <HintPath>lib\gtksourceview3-sharp.dll</HintPath>
     </Reference>
     <Reference Include="NClang, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>lib\NClang.dll</HintPath>
+      <HintPath>lib/NClang.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>

@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Gdk;
@@ -23,8 +24,6 @@ namespace iCode.GUI.Tabs
 		private readonly string _temp;
 		private string _actualText;
 
-		private int _editLast = 0;
-
 		private List<Gdk.Key> _keys;
 		private Dictionary<ClangDiagnostic, string> _diagnos;
 
@@ -33,14 +32,25 @@ namespace iCode.GUI.Tabs
 
 		private ClangTranslationUnit _trans;
 		private ClangIndex _index;
-		private IEnumerable<ClangToken> _tokens = new List<ClangToken>();
+		private ClangTokenSet _tokens;
+
+		private bool _recoloring;
 		
 		private bool _recolor = true;
 
+		~CodeTabWidget()
+		{
+			_trans.Dispose();
+			_index.Dispose();
+			_t.Interrupt();
+			Buffer.Dispose();
+			this.Dispose();
+		}
+		
 		public CodeTabWidget(Class @class)
 		{
 			_keys = new List<Gdk.Key>();
-			base.Buffer = new TextBuffer(new TextTagTable());// new SourceBuffer(new SourceLanguageManager().GetLanguage("objc"));
+			base.Buffer = new SourceBuffer(new TextTagTable());
 			_notebookTabLabel = new NotebookTabLabel(System.IO.Path.GetFileName(@class.Filename), this);
 			this._file = @class;
 			var css = new CssProvider();
@@ -56,6 +66,9 @@ namespace iCode.GUI.Tabs
 			Console.WriteLine($"Loading {@class.Filename}");
 			this.StyleContext.AddProvider(css, 1);
 			this._temp = System.IO.Path.Combine(ProjectManager.Project.Path, "~" + @class.Filename);
+			
+			File.Copy(System.IO.Path.Combine(ProjectManager.Project.Path, @class.Filename), _temp, true);
+			
 			_actualText = File.ReadAllText(System.IO.Path.Combine(ProjectManager.Project.Path, @class.Filename));
 			Buffer.Text = _actualText;
 			this.KeyPressEvent += Handle_KeyPressEvent;
@@ -94,30 +107,36 @@ namespace iCode.GUI.Tabs
 			ek.ForegroundGdk = Extensions.RgbaFromHex("A4A1C1");
 			Buffer.TagTable.Add(ek);
 
-		#region Clang init
+			type.Dispose();
+			k.Dispose();
+			ek.Dispose();
+			
+			#region Clang init
 			
 			_index = ClangService.CreateIndex();
-			_trans = _index.CreateTranslationUnitFromSourceFile(_temp,
-				_file.CompilerFlags.Concat(ProjectManager.Flags).ToArray(), ProjectManager.Project.Classes
-																		    .Select(a =>
-																			    new
-																				    ClangUnsavedFile(
-																					    a.Filename,
-																					    File
-																						    .ReadAllText(
-																							    System
-																								    .IO
-																								    .Path
-																								    .Combine(
-																									    ProjectManager
-																										    .Project
-																										    .Path,
-																									    a.Filename))
-																				    )
-																		    ).ToArray());
+			
+			var unsavedFiles = ProjectManager.Project.Classes
+											 .Select(a =>
+												  new ClangUnsavedFile(
+													  a.Filename,
+													  File.ReadAllText(
+														  System.IO.Path.Combine(
+															  ProjectManager.Project.Path,
+															  a.Filename)))).ToArray();
+
+			//_trans = _index.CreateTranslationUnitFromSourceFile(_temp,
+			//	_file.CompilerFlags.Concat(ProjectManager.Flags).ToArray(),
+			//	unsavedFiles);
+
+			_trans = _index.ParseTranslationUnit(_temp,
+				_file.CompilerFlags.Concat(ProjectManager.Flags).ToArray(),
+				unsavedFiles, 
+				TranslationUnitFlags.None);
+			
+			_tokens = _trans.Tokenize(new ClangSourceRange(2, Buffer.EndIter.Offset + 2));
 			
 			_diagnos = new Dictionary<ClangDiagnostic, string>();
-			_t = new Thread(HandleParameterizedThreadStart);
+			_t = new Thread(RecolorThread);
 			_t.Start();
 			
 			#endregion
@@ -134,263 +153,197 @@ namespace iCode.GUI.Tabs
 			};
 			return tag;
 		}
-		
-		void HandleParameterizedThreadStart(object obj)
+
+		string GetTokenFrom (ClangSourceLocation location)
 		{
-		#region Error checking
-			// Workaround:
-			/*Gtk.Application.Invoke((oaz,zaedf) =>
+			string text;
+
+			if (System.IO.Path.GetFileName(location.FileLocation.File.FileName) == _file.Filename)
 			{
-				Buffer.RemoveTag($"warning",
-					Buffer.GetIterAtOffset(0),
-					Buffer.GetIterAtOffset(Buffer.Text.Length));
-				Buffer.RemoveTag($"error",
-					Buffer.GetIterAtOffset(0),
-					Buffer.GetIterAtOffset(Buffer.Text.Length));
-			});*/
-			
+				text = Buffer.GetText(Buffer.GetIterAtOffset(0), Buffer.GetIterAtOffset(Buffer.CharCount - 1),
+					false);
+			}
+			else
+			{
+				text = File.ReadAllText(location.FileLocation.File.ToString());
+			}
+
+			var tokens = text.SplitWithDelims(';', ' ', '\n', ';', '(', ')', '[', ']', '.', ',', '=', '<', '>',
+				'+', '-', '/', '*', '%', '@', '"', '\'', '\r');
+
+			var start = 0;
+			var end = 0;
+			string token = "";
+
+			for (int i = 0; i < tokens.Count; i++)
+			{
+				end += tokens[i].Length;
+
+				if (start < location.SpellingLocation.Offset + 1 &&
+					location.SpellingLocation.Offset + 1 <= end)
+				{
+					token = tokens[i];
+					break;
+				}
+
+				start += tokens[i].Length;
+			}
+
+			return token;
+		}
+
+		void RecolorThread()
+		{
+
 			// ThIS cOdE IS SeLF DoCUMenTiNg
-			while (!((int) (DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds - _editLast > 2 && _recolor)) ;
+
+			while (_recoloring || !_recolor) ;
+			_recoloring = true;
+
 			File.WriteAllText(_temp, Buffer.Text);
 
-			// */
+			_trans.Reparse(ProjectManager.Project.Classes
+										 .Select(a =>
+											  new ClangUnsavedFile(
+												  a.Filename,
+												  File.ReadAllText(
+													  System.IO.Path.Combine(
+														  ProjectManager.Project.Path,
+														  a.Filename)))).ToArray(), ReparseTranslationUnitFlags.None);
 
-			_trans = _index.CreateTranslationUnitFromSourceFile(_temp,
-				_file.CompilerFlags.Concat(ProjectManager.Flags).ToArray(), ProjectManager.Project.Classes
-																		    .Select(a =>
-																			    new
-																				    ClangUnsavedFile(
-																					    a.Filename,
-																					    File
-																						    .ReadAllText(
-																							    System
-																								    .IO
-																								    .Path
-																								    .Combine(
-																									    ProjectManager
-																										    .Project
-																										    .Path,
-																									    a.Filename))
-																				    )
-																		    ).ToArray());
+			_tokens.Dispose();
+			_tokens = _trans.Tokenize(new ClangSourceRange(2, Buffer.EndIter.Offset + 2));
 			
-			List<ClangDiagnostic> toRemove = new List<ClangDiagnostic>();
-			foreach (var diagno in _diagnos.Keys)
-				if (!_trans.DiagnosticSet.Items.Contains(diagno))
-					toRemove.Add(diagno);
-
+			Buffer.RemoveTag("error", Buffer.StartIter, Buffer.EndIter);
+			Buffer.RemoveTag("warning", Buffer.StartIter, Buffer.EndIter);
+			
+			#region Error checking
+			
 			if (_trans.DiagnosticCount == 0)
 			{
-				toRemove = _diagnos.Keys.ToList();
 				Console.WriteLine("Code is clean, no any error found !");
 			}
-			
-			foreach (var item in toRemove)
-			{
-				Gtk.Application.Invoke((o, a) =>
-				{
-					Console.WriteLine("Removing squiggle");
-					try
-					{
-						if (item.Severity == DiagnosticSeverity.Error)
-							Buffer.RemoveTag($"error",
-								Buffer.GetIterAtOffset(item.Location.SpellingLocation.Offset),
-								Buffer.GetIterAtOffset(item.Location.SpellingLocation.Offset + _diagnos[item].Length - 1));
-						else if (item.Severity == DiagnosticSeverity.Warning)
-							Buffer.RemoveTag($"warning",
-								Buffer.GetIterAtOffset(item.Location.SpellingLocation.Offset),
-								Buffer.GetIterAtOffset(item.Location.SpellingLocation.Offset + _diagnos[item].Length - 1));
-					}
-					catch
-					{
-						
-					}
-				});
-				_diagnos.Remove(item);
-			}
-			
-			//foreach (var token in tokens)
-			//	Console.WriteLine($"Token: {token.Spelling}, Offset: [{token.Extent.Start.SpellingLocation.Offset} -> {token.Extent.End.SpellingLocation.Offset}], Kind: {token.Kind}, Extent: {token.Extent}");
-			Console.WriteLine(_tokens.Count().ToString());
+
 			foreach (var item in _trans.DiagnosticSet.Items)
 				try
 				{
-					if (!_diagnos.Keys.Contains(item))
+					var token = GetTokenFrom(item.Location);
+
+					Console.WriteLine(
+						$"{item.Severity} at offset {item.Location.SpellingLocation.Offset} ({item.Location.FileLocation.File}):  {token} ({item.Spelling})");
+
+					Gtk.Application.Invoke((o, a) =>
 					{
-						var startSearch = Buffer.GetIterAtLine(item.Location.SpellingLocation.Line);
-						TextIter endSearch;
-						try
-						{
-							endSearch = Buffer.GetIterAtLine(item.Location.SpellingLocation.Line + 1);
-						}
-						catch
-						{
-							endSearch = Buffer.GetIterAtOffset(Buffer.CharCount - 1);
-						}
+						if (item.Severity == DiagnosticSeverity.Error)
+							Buffer.ApplyTag($"error",
+								Buffer.GetIterAtOffset(item.Location.SpellingLocation.Offset),
+								Buffer.GetIterAtOffset(item.Location.SpellingLocation.Offset + token.Length));
+						else if (item.Severity == DiagnosticSeverity.Warning)
+							Buffer.ApplyTag($"warning",
+								Buffer.GetIterAtOffset(item.Location.SpellingLocation.Offset),
+								Buffer.GetIterAtOffset(item.Location.SpellingLocation.Offset + token.Length));
 
-						var text = Buffer.GetText(startSearch, endSearch, false);
-						var tokens = text.Split(';', ' ', '\n', ';', '(', ')', '[', ']', '.', ',', '=', '<', '>', '+', '-', '/', '*', '%', '@', '"', '\'', '\r');
+					});
 
-						var start = 0;
-						var end = 0;
-						string token = "";
-						
-						for (int i = 0; i < tokens.Length; i++)
-						{
-							start += tokens[i].Length;
-							if (start <= item.Location.SpellingLocation.Column &&
-							    item.Location.SpellingLocation.Column <= end)
-							{
-								token = tokens[i];
-								break;
-							}
-							end += tokens[i].Length;
-						}
-						
-						/*
-						Console.WriteLine(_tokens.Count().ToString());
-						foreach (var t in _tokens)
-						{
-							Console.WriteLine($"{t.Extent.Start.ExpansionLocation.Offset} <= {item.Location.ExpansionLocation.Offset} <= {t.Extent.End.ExpansionLocation.Offset}");
-						}
-						
-						var e = _tokens.First(a => a.Extent.Start.SpellingLocation.Offset == item.Location.ExpansionLocation.Offset);
-						 //var e = _trans.GetCursor(item.Location).Spelling.Length;
-						var offset = item.Location.SpellingLocation.Offset;*/
-						Console.WriteLine(
-							$"{item.Severity} at offset {item.Location.SpellingLocation.Offset}:  {token}");
+					_diagnos.Add(item, token);
 
-						Gtk.Application.Invoke((o, a) =>
-						{
-							
-							if (item.Severity == DiagnosticSeverity.Error)
-								Buffer.ApplyTag($"error",
-									Buffer.GetIterAtOffset(item.Location.SpellingLocation.Offset),
-									Buffer.GetIterAtOffset(item.Location.SpellingLocation.Offset + token.Length - 1));
-							else if (item.Severity == DiagnosticSeverity.Warning)
-								Buffer.ApplyTag($"warning",
-									Buffer.GetIterAtOffset(item.Location.SpellingLocation.Offset),
-									Buffer.GetIterAtOffset(item.Location.SpellingLocation.Offset + token.Length - 1));
-						});
-
-						_diagnos.Add(item, token);
-					}
 				}
 				catch (Exception e)
 				{
 					Console.WriteLine($"The parsing of error failed: {e}");
 				}
 
-		#endregion
-				
-			foreach (var token in _tokens)
-			{
-				switch (token.Kind)
-				{
-					case TokenKind.Comment:
-						Gtk.Application.Invoke((o, a) =>
-						{
-							Buffer.ApplyTag("comment", Buffer.GetIterAtOffset(token.Location.SpellingLocation.Offset),
-								Buffer.GetIterAtOffset(token.Location.SpellingLocation.Offset + token.Spelling.Length));
-						});
-						break;
-					case TokenKind.Identifier:
-						Gtk.Application.Invoke((o, a) =>
-						{
-							Buffer.ApplyTag("identifier", Buffer.GetIterAtOffset(token.Location.SpellingLocation.Offset),
-								Buffer.GetIterAtOffset(token.Location.SpellingLocation.Offset + token.Spelling.Length));
-						});
-						break;
-					case TokenKind.Literal:
-						TextTag tag = null;
-						if (GetCursorKind(token).ToString().Contains("Attribute"))
-						{
-							tag = GetTagFromHex(0.706328, 0.872545, 0.381282);
-						}
-						else if (GetCursorKind(token).ToString().Contains("Float") || GetCursorKind(token).ToString().Contains("Int") || GetCursorKind(token).ToString().Contains("Character"))
-						{
-							tag = GetTagFromHex(0.870818, 0.832689, 0.24896);
-						}
-						else if (GetCursorKind(token).ToString().Contains("String"))
-						{
-							tag = GetTagFromHex(0.609991, 0.725519, 0.809682);
-						}
-						else if (GetCursorKind(token).ToString().Contains("Constant"))
-						{
-							tag = GetTagFromHex(0.72719, 0.59597, 0.87424);
-						}
-						else if (GetCursorKind(token).ToString().Contains("Preprocessing"))
-						{
-							tag = GetTagFromHex(0.663419, 0.64803, 0.849437);
-						}
-						else
-						{
-							tag = GetTagFromHex(0.926027, 0.924097, 0.966442);
-						}
-						Gtk.Application.Invoke((o, a) =>
-						{
-							Buffer.ApplyTag(tag, Buffer.GetIterAtOffset(token.Location.SpellingLocation.Offset),
-								Buffer.GetIterAtOffset(token.Location.SpellingLocation.Offset + token.Spelling.Length));
-						});
-						break;
-					case TokenKind.Keyword:
-						Gtk.Application.Invoke((o, a) =>
-						{
-							Buffer.ApplyTag("keyword", Buffer.GetIterAtOffset(token.Location.SpellingLocation.Offset),
-								Buffer.GetIterAtOffset(token.Location.SpellingLocation.Offset + token.Spelling.Length));
-						});
-						break;
-					default:
-						Gtk.Application.Invoke((o, a) =>
-						{
-							Buffer.ApplyTag(GetTagFromHex(0.926027, 0.924097, 0.966442), Buffer.GetIterAtOffset(token.Location.SpellingLocation.Offset),
-								Buffer.GetIterAtOffset(token.Location.SpellingLocation.Offset + token.Spelling.Length));
-						});
-						break;
-				}
-			}
-			/* Parse by CURSor, but it is CURSed
-			int it = 0;
-			CursorKind? previousKind = null;
+			#endregion
 
-			for (int i = 0; i <= Buffer.Text.Length; i++)
-			{
-				var cursor = _trans.GetCursor(_trans.GetLocationForOffset(_trans.GetFile(_temp), i));
-
-				bool doRoutine = false;
-				if (previousKind != cursor.Kind) // || Buffer.Text[i] == '\n')
+			var clangTokens = _tokens.Tokens.ToList();
+			if (clangTokens.Count() != 0)
+				foreach (var token in clangTokens)
 				{
-					// Console.WriteLine($"{cursor.Spelling} (at {i}) is dawn of a new element -> {cursor.Kind}");
-					doRoutine = true;
-				}
+					TextTag tag = null;
 
-				if (doRoutine)
-				{
-					if (i - it > 0)
+					switch (token.Kind)
 					{
-						Console.WriteLine(
-							$"{Buffer.Text.Substring(it, i - it)} (from {it} to {i}) is a {previousKind}!");
-					
-						if (previousKind.ToString().Contains("Reference"))
-						{
-							int start = it;
-							int end = i;
+						case TokenKind.Comment:
+							Gtk.Application.Invoke((o, a) =>
+							{
+								Buffer.ApplyTag("comment",
+									Buffer.GetIterAtOffset(token.Location.SpellingLocation.Offset),
+									Buffer.GetIterAtOffset(token.Location.SpellingLocation.Offset +
+														   token.Spelling.Length));
+							});
+							break;
+						case TokenKind.Identifier:
+							Gtk.Application.Invoke((o, a) =>
+							{
+								Buffer.ApplyTag("identifier",
+									Buffer.GetIterAtOffset(token.Location.SpellingLocation.Offset),
+									Buffer.GetIterAtOffset(token.Location.SpellingLocation.Offset +
+														   token.Spelling.Length));
+							});
+							break;
+						case TokenKind.Literal:
+							if (GetCursorKind(token).ToString().Contains("Attribute"))
+							{
+								tag = GetTagFromHex(0.706328, 0.872545, 0.381282);
+							}
+							else if (GetCursorKind(token).ToString().Contains("Float") ||
+									 GetCursorKind(token).ToString().Contains("Int") ||
+									 GetCursorKind(token).ToString().Contains("Character"))
+							{
+								tag = GetTagFromHex(0.870818, 0.832689, 0.24896);
+							}
+							else if (GetCursorKind(token).ToString().Contains("String"))
+							{
+								tag = GetTagFromHex(0.609991, 0.725519, 0.809682);
+							}
+							else if (GetCursorKind(token).ToString().Contains("Constant"))
+							{
+								tag = GetTagFromHex(0.72719, 0.59597, 0.87424);
+							}
+							else if (GetCursorKind(token).ToString().Contains("Preprocessing"))
+							{
+								tag = GetTagFromHex(0.663419, 0.64803, 0.849437);
+							}
+							else
+							{
+								tag = GetTagFromHex(0.926027, 0.924097, 0.966442);
+							}
 
-							
-						}
-
-						it = i;
+							Gtk.Application.Invoke((o, a) =>
+							{
+								Buffer.ApplyTag(tag, Buffer.GetIterAtOffset(token.Location.SpellingLocation.Offset),
+									Buffer.GetIterAtOffset(token.Location.SpellingLocation.Offset +
+														   token.Spelling.Length));
+								tag.Dispose();
+							});
+							break;
+						case TokenKind.Keyword:
+							Gtk.Application.Invoke((o, a) =>
+							{
+								Buffer.ApplyTag("keyword",
+									Buffer.GetIterAtOffset(token.Location.SpellingLocation.Offset),
+									Buffer.GetIterAtOffset(token.Location.SpellingLocation.Offset +
+														   token.Spelling.Length));
+							});
+							break;
+						default:
+							Gtk.Application.Invoke((o, a) =>
+							{
+								var tag = GetTagFromHex(0.926027, 0.924097, 0.966442);
+								Buffer.ApplyTag(tag,
+									Buffer.GetIterAtOffset(token.Location.SpellingLocation.Offset),
+									Buffer.GetIterAtOffset(token.Location.SpellingLocation.Offset +
+														   token.Spelling.Length));
+								tag.Dispose();
+							});
+							break;
 					}
 
-					previousKind = cursor.Kind;
-						
 				}
+			else
+				Console.WriteLine("Weird");
 
-				// i += cursor.Spelling.Length > 0 ? cursor.Spelling.Length - 1 : 0;
-			}
-*/
-
-			_recolor = false;
+			_recoloring = _recolor = false;
 		}
 
 		CursorKind GetCursorKind(ClangToken token)
@@ -399,60 +352,18 @@ namespace iCode.GUI.Tabs
 				token.Location.SpellingLocation.Offset + (token.Spelling.Length / 2))).Kind;
 		}
 
-		void CodeISearchedTooLongForNothingSoIfSomeoneNeedsItThisIsHereButIFoundThatThereWasAwayInTheLibrary_ButItIsCompiledIntoTheBinaryAnyway()
-		{
-			int it = 0;
-			CursorKind? previousKind = null;
-
-			for (int i = 0; i <= Buffer.Text.Length; i++)
-			{
-				var cursor = _trans.GetCursor(_trans.GetLocationForOffset(_trans.GetFile(_temp), i));
-
-				bool doRoutine = previousKind != cursor.Kind;
-
-				if (doRoutine)
-				{
-					if (i - it > 0)
-					{
-						Console.WriteLine(
-							$"{Buffer.Text.Substring(it, i - it)} (from {it} to {i}) is a {previousKind}!");
-
-						if (previousKind.ToString().Contains("Reference"))
-						{
-							int start = it;
-							int end = i;
-						}
-
-						
-
-						it = i;
-					}
-
-					previousKind = cursor.Kind;
-
-				}
-
-				// i += cursor.Spelling.Length > 0 ? cursor.Spelling.Length - 1 : 0;
-			}
-
-		}
-
 		private void Buffer_Changed(object sender, EventArgs e)
 		{
-			_tokens = _trans.Tokenize(ClangSourceRange.GetRange(_trans.GetLocationForOffset(_trans.GetFile(_temp), 0),
-				_trans.GetLocationForOffset(_trans.GetFile(_temp), Buffer.Text.Length))).Tokens;
-
-			Console.WriteLine(_tokens.Count().ToString());
-			
 			if (!_recolor)
 				_recolor = true;
 
 			if (_t.ThreadState != ThreadState.Running)
 			{
-				_t = new Thread(HandleParameterizedThreadStart);
+				_t = new Thread(RecolorThread);
 				_t.Start();
 			}
-		#region CODE SAVING
+
+			#region CODE SAVING
 			if (_actualText != Buffer.Text)
 			{
 				if (!_notebookTabLabel.Label.Text.EndsWith("*", StringComparison.CurrentCulture))
@@ -467,14 +378,12 @@ namespace iCode.GUI.Tabs
 					_notebookTabLabel.Label.Text = _notebookTabLabel.Label.Text.TrimEnd('*');
 				}
 			}
-		#endregion
+			#endregion
 
 			if (e == null)
 				return;
 
-			_editLast = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds;
-
-		#region CODE COMPLETION
+			#region CODE COMPLETION
 			int cursorPosition = base.Buffer.CursorPosition;
 			bool flag = this._s.Length == base.Buffer.Text.Length - 1;
 			if (flag)
@@ -524,7 +433,7 @@ namespace iCode.GUI.Tabs
 				}
 			}
 			this._s = base.Buffer.Text;
-		#endregion
+			#endregion
 		}
 
 		void Handle_KeyPressEvent(object o, KeyPressEventArgs args)

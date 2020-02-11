@@ -27,8 +27,8 @@ namespace iCode.Projects
 			"-arch", "arm64",
 			"--sysroot", Program.SDKPath,
 			"-std=c11", 
-			"-I", "/usr/lib/clang/9.0.0/include/" 
-			// "-fmodules"
+			"-I", "/usr/lib/clang/9.0.1/include/",
+			"-fmodules"
 		};
 
 
@@ -272,31 +272,33 @@ namespace iCode.Projects
 
 			Program.WinInstance.ProgressBar.PulseStep = 1.0d / (double)(((double) Project.Classes.Count(c => c.Filename.EndsWith(".m", StringComparison.CurrentCulture))) + 2d);
 
+			Program.WinInstance.ProgressBar.Fraction = 0;
+			
 			if (Project.Classes.Any((arg) => arg.Filename.EndsWith(".swift", StringComparison.CurrentCultureIgnoreCase)))
 				Extensions.ShowMessage(MessageType.Error, "Cannot build.", "Swift is not supported for the moment.");
                 
 			foreach (var @class in from c in Project.Classes where !c.Filename.EndsWith(".h", StringComparison.CurrentCultureIgnoreCase) select c)
 			{
-				Program.WinInstance.StateLabel.Text = "Building " + @class;
+				Program.WinInstance.StateLabel.Text = "Building " + @class.Filename;
 				Directory.CreateDirectory(Path.Combine(cachedir, "build"));
 				var flags = string.Join(" ", Flags) + " -c " + string.Join(" ", @class.CompilerFlags) + " ";
-				var proc = Extensions.GetProcess("clang", flags + "'" + Path.Combine(Project.Path, @class.Filename) + "' -o '" + Path.Combine(cachedir, "build", @class.Filename + ".output") + "'");
+				var proc = Extensions.GetProcess("clang", flags + "\"" + Path.Combine(Project.Path, @class.Filename) + "\" -o \"" + Path.Combine(cachedir, "build", @class.Filename + ".output") + "\"");
 				if (Program.WinInstance.Output.Run(proc, (int)ActionCategory.Make) != 0)
 					return false;
-				s += "'" + Path.Combine(cachedir, "build", @class.Filename + ".output") + "' ";
+				s += "\"" + Path.Combine(cachedir, "build", @class.Filename + ".output") + "\" ";
 				Program.WinInstance.ProgressBar.Fraction += Program.WinInstance.ProgressBar.PulseStep;
 			}
 			Program.WinInstance.StateLabel.Text = "Linking";
 			Directory.CreateDirectory(Path.Combine(Project.Path, ".icode/Payload/" + Project.Name + ".app/"));
-			var process = Extensions.GetProcess("clang", @"-target '" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/target/arm64-apple-darwin14") + "' -framework " + string.Join(" -framework ", Project.Frameworks)  + " -isysroot '" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/sdk") + "' -arch arm64 -o '" + Path.Combine(Project.Path, ".icode/Payload/" + Project.Name + ".app/" + Project.Name) + "' " + s);
+			var process = Extensions.GetProcess("clang", "-target \"" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/target/arm64-apple-darwin14") + "\" -framework " + string.Join(" -framework ", Project.Frameworks)  + " -isysroot \"" + Program.SDKPath + "\" -arch arm64 -o \"" + Path.Combine(Project.Path, ".icode/Payload/" + Project.Name + ".app/" + Project.Name) + "\" " + s);
 			if (Program.WinInstance.Output.Run(process, (int)ActionCategory.Link) != 0)
 				return false;
 
 			Program.WinInstance.ProgressBar.Fraction += Program.WinInstance.ProgressBar.PulseStep;
 			Program.WinInstance.StateLabel.Text = "Packing IPA";
-			foreach (var f in Directory.GetFiles(Path.Combine(Project.Path, "Resources"))) 
+			foreach (var f in Directory.GetFiles(Path.Combine(Project.Path, "Resources")))
 			{
-				File.Copy(f, Path.Combine(Project.Path, ".icode/Payload/" + Project.Name + ".app/"));
+				File.Copy(f, Path.Combine(Project.Path, ".icode/Payload/" + Project.Name + ".app/", Path.GetFileName(f)));
 			}
 
 			Directory.Delete(Path.Combine(cachedir, "build"), true);
@@ -327,9 +329,9 @@ namespace iCode.Projects
 			var process = Extensions.GetProcess(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/helper/sign-ipa"), string.Format("-m {4} -c {3} -k {2} -o {1} {0}",
 				"'" + path + "'",
 				"'" + Path.Combine(Project.Path, "build/" + Project.Name + ".ipa'"),
-				"'" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/developer/key.pem'"),
-				"'" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/developer/certificate.pem'"),
-				"'" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/developer/provision-profile.mobileprovision'")
+				"'" + Path.Combine(Program.DeveloperPath, "key.pem'"),
+				"'" + Path.Combine(Program.DeveloperPath, "certificate.pem'"),
+				"'" + Path.Combine(Program.DeveloperPath, "provision-profile.mobileprovision'")
 			));
 
 			int i = Program.WinInstance.Output.Run(process, (int)ActionCategory.Sideload);

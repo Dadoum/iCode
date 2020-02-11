@@ -73,13 +73,13 @@ namespace iCode
 				Gtk.Application.Init();
 				
 				// Prevent the 1000203000 warnings of GTK
-				GLib.Log.SetDefaultHandler(new GLib.LogFunc((domain, level, message) =>
+				GLib.Log.SetDefaultHandler((domain, level, message) =>
 				{
 					if (level != GLib.LogLevelFlags.Error && level != GLib.LogLevelFlags.FlagFatal)
 						return;
 
-					Console.WriteLine($"Gtk error: {message} ({domain})");
-				}));
+					Console.Error.WriteLine($"Gtk error: {message} ({domain})");
+				});
 
 				Console.WriteLine("Initialized GTK and GDL.");
 
@@ -282,13 +282,13 @@ killall appimagelauncherfs &> /dev/null
 							// Show a notification with a button to ask user if they want to update
 							Notification notification = new Notification(Identity.ApplicationName,
 								$"{Identity.ApplicationName} is ready to update from v{Assembly.GetEntryAssembly().GetName().Version} to {UpdateInfo["tag_name"]}",
-								15000);
+								10000);
 							notification.SetIconFromPixbuf(
 								Pixbuf.LoadFromResource("iCode.resources.images.icon.png"));
 							notification.AddAction("click", "Update now",
 								((ptr, action, data) => { Update(updater); }));
 							notification.Show();
-							System.Threading.Thread.Sleep(15000);
+							System.Threading.Thread.Sleep(11000);
 							GC.KeepAlive(notification);
 						}
 						else
@@ -332,11 +332,15 @@ killall appimagelauncherfs &> /dev/null
 						// Show a notification to inform the user that an update is available
 						Notification notification = new Notification(Identity.ApplicationName,
 							$"New {Identity.ApplicationName} version is available. You are on v{Assembly.GetEntryAssembly().GetName().Version}, and the latest version available is {UpdateInfo["tag_name"]}.",
-							15000);
+							5000);
 						notification.SetIconFromPixbuf(
-							Pixbuf.LoadFromResource("iCode.resources.images.icon.png"));
+							Identity.ApplicationIcon);
 						notification.Show();
+						
+						Console.WriteLine("Update available.");
 					}
+					else 
+						Console.WriteLine(Identity.ApplicationName + " is up-to-date.");
 				}
 			});
 		}

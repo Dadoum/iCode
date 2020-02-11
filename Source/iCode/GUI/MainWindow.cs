@@ -180,6 +180,8 @@ namespace iCode.GUI
                 {
                     border-bottom-right-radius: 4px;
                     border-bottom-left-radius: 4px;
+					border-top-right-radius: 0px;
+                    border-top-left-radius: 0px;
                     min-height: 4px;
                 }
                 ");
