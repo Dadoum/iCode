@@ -11,9 +11,13 @@ using Gdk;
 using Gtk;
 using iCode;
 using iCode.GUI;
-using iCode.GUI.Tabs;
+using iCode.GUI.Backend.Interfaces;
+using iCode.GUI.GTK3;
+using iCode.GUI.GTK3.GladeUI;
+using iCode.GUI.GTK3.Tabs;
 using NClang;
 using Pango;
+using MainWindow = iCode.GUI.GTK3.MainWindow;
 
 namespace iCode.Utils
 {
@@ -88,7 +92,7 @@ namespace iCode.Utils
 			}
 			catch (Exception e)
 			{
-				ExceptionWindow.Create(e, notebook).ShowAll();
+				GladeHelper.Create<ExceptionWindow>().ShowException(e, Program.WinInstance);
 			}
 		}
 
@@ -149,7 +153,7 @@ namespace iCode.Utils
 				Console.WriteLine($"Unable to retrieve the icon of {path}: {e}");
 			}
 
-			return IconLoader.LoadIcon(Program.WinInstance, "gtk-file", IconSize.Menu);
+			return IconLoader.LoadIcon((Widget) Program.WinInstance, "gtk-file", IconSize.Menu);
 		}
 
 		public static Gdk.Color RgbaFromHex(string s)

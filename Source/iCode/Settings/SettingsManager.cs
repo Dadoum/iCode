@@ -1,11 +1,12 @@
 using System;
 using System.IO;
-using Gtk;
 using iCode.GUI;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using iCode.GUI.Backend;
+using iCode.GUI.Backend.Interfaces;
 using Newtonsoft.Json;
 
 namespace iCode.Settings
@@ -14,6 +15,14 @@ namespace iCode.Settings
 	{
 		private JObject settings;
 		private string settingsPath;
+		private List<Setting> _defaultSettings = new List<Setting>();
+
+		internal struct Setting
+		{
+			internal string Name;
+			internal string Path;
+			internal JToken Value;
+		}
 
 		public const int LatestFormatSupported = 3;
 
@@ -26,6 +35,34 @@ namespace iCode.Settings
 		public void InitializeSettings()
 		{
 			Console.WriteLine("Loading settings...");
+			
+			_defaultSettings.Add(new Setting
+			{
+				Name = "check_updates",
+				Path = "General/Updates",
+				Value = false
+			});
+			
+			_defaultSettings.Add(new Setting
+			{
+				Name = "auto_install",
+				Path = "General/Updates",
+				Value = false
+			});
+			
+			_defaultSettings.Add(new Setting
+			{
+				Name = "tab_width",
+				Path = "Editor/Editor",
+				Value = 4
+			});
+			
+			_defaultSettings.Add(new Setting
+			{
+				Name = "ui_backend",
+				Path = "Appearance/Appearance",
+				Value = 4
+			});
 
 			bool approvalCheck = false;
 			bool approvalInstall = false;
@@ -36,25 +73,36 @@ namespace iCode.Settings
 				if (!settings.ContainsKey("format") || (int) settings["format"] != LatestFormatSupported)
 				{
 					Console.WriteLine("Conversion required.");
+					recreationNeeded = true;
 					// Convertion from 1 to 3
 					if (settings.ContainsKey("updateConsent") && settings["updateConsent"].Type == JTokenType.Boolean)
 					{
-						recreationNeeded = true;
 						approvalCheck = (bool) settings["updateConsent"];
 					}
 					// Conversion from 2-like to 3
 					else
 					{
-						recreationNeeded = true;
 						approvalCheck = (bool) settings["updateConsent"]["checkUpdates"];
 						approvalInstall = (bool) settings["updateConsent"]["autoInstall"];
 					}
 				}
+
+				if (!recreationNeeded)
+				{
+					// Check for iCode's default settings keys
+					var settings = GetSettings();
+					
+					if (!settings.Any(s => s["name"].ToString() == "check_updates"))
+						AddSettingsEntry("check_updates", "General/Updates", approvalCheck);
+					if (!settings.Any(s => s["name"].ToString() == "auto_install"))
+						AddSettingsEntry("auto_install", "General/Updates", approvalInstall);
+					File.WriteAllText(settingsPath, this.settings.ToString());
+				}
 			}
 			else
 			{
-				var startup = StartupWindow.Create();
-				if ((ResponseType) startup.Run() != ResponseType.Ok)
+				var startup = UIHelper.CreateFromInterface<IStartupWindow>();
+				if (startup.Run() != -5)
 					Environment.Exit(1);
 
 				approvalCheck = startup.Accepted;
@@ -64,10 +112,8 @@ namespace iCode.Settings
 			if (recreationNeeded)
 			{
 				Console.WriteLine("Initializing settings file in format " + LatestFormatSupported);
-				settings = new JObject();
-
-				settings.Add(new JProperty("settings", new JArray()));
-
+				settings = new JObject { new JProperty("settings", new JArray()) };
+				
 				AddSettingsEntry("check_updates", "General/Updates", approvalCheck);
 				AddSettingsEntry("auto_install", "General/Updates", approvalInstall);
 
@@ -76,7 +122,11 @@ namespace iCode.Settings
 				File.WriteAllText(settingsPath, settings.ToString());
 				Console.WriteLine("Initialized settings file.");
 			}
-			
+
+			foreach (var setting in _defaultSettings)
+				if (!GetSettings().Any(s => s["name"].ToString() == setting.Name))
+					AddSettingsEntry(setting.Name, setting.Path, setting.Value);
+
 			Console.WriteLine("Settings loaded.");
 		}
 

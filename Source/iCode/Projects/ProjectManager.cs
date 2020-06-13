@@ -4,9 +4,13 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
-using Gtk;
+using System.Runtime.InteropServices;
 using iCode.GUI;
-using iCode.GUI.Panels;
+using iCode.GUI.Backend;
+using iCode.GUI.Backend.Interfaces.Panels;
+using iCode.GUI.GTK3;
+using iCode.GUI.GTK3.GladeUI;
+using iCode.GUI.GTK3.Panels;
 using iCode.Utils;
 using Newtonsoft.Json.Linq;
 using Action = Gtk.Action;
@@ -25,22 +29,14 @@ namespace iCode.Projects
 			"-target", Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/target/arm64-apple-darwin14"),
 			"-x","objective-c",
 			"-arch", "arm64",
-			"--sysroot", Program.SDKPath,
+			"--sysroot", Program.SdkPath,
 			"-std=c11", 
 			"-I", "/usr/lib/clang/9.0.1/include/",
 			"-fmodules"
 		};
 
 
-		private static List<Widget> _sensitiveWidgets = new List<Widget>();
-        
-		private static List<RowActivatedHandler> _handlers = new List<RowActivatedHandler>();
-
-		private static TreeIter _projectNode;
-		private static TreeIter _resourcesNode;
-
-		private static List<TreeIter> _classNodes = new List<TreeIter>();
-		private static List<TreeIter> _resourceNodes = new List<TreeIter>();
+		private static List<dynamic> _sensitiveWidgets = new List<dynamic>();
 
 		public static bool ProjectLoaded
 		{
@@ -50,103 +46,20 @@ namespace iCode.Projects
 			}
 		}
 
-		public static void AddSensitiveWidget(Widget obj)
+		public static void AddSensitiveWidget(dynamic obj)
 		{
-			var widget = obj as Widget;
-			widget.Sensitive = ProjectLoaded;
-			_sensitiveWidgets.Add(widget);
+			obj.Sensitive = (ProjectLoaded);
+			_sensitiveWidgets.Add(obj);
 		}
 
 		public static void LoadProject(string file)
 		{
-			TreeView treeView = Program.WinInstance.ProjectExplorer.TreeView;
-			TreeStore treeStore = (TreeStore)Program.WinInstance.ProjectExplorer.TreeView.Model;
 			ProjectManager.Project = new Project(file);
 
-			treeStore.Clear();
-            
+			Program.WinInstance.ProjectExplorerWidget.LoadProject(file);
+
+
 			CodeWidget.RemoveTab("Welcome to iCode !");
-
-			var e = new RowActivatedHandler((o, args) =>
-			{
-				TreeIter treeIter;
-				treeStore.GetIter(out treeIter, args.Path);
-
-				int type = 0;
-
-				foreach (var @class in _classNodes)
-				{
-					if (Equals(treeIter, @class))
-					{
-						type = 1;
-						break;
-					}
-				}
-
-				if (type != 1)
-				{
-					foreach (var @class in _resourceNodes)
-					{
-						if (Equals(treeIter, @class))
-						{
-							type = 2;
-							break;
-						}
-					}
-				}
-
-				switch (type)
-				{
-					case 1:
-						var code = CodeWidget.AddCodeTab(Path.Combine(Path.GetDirectoryName(file), (string)treeStore.GetValue(treeIter, 1)));
-						CodeWidget.Codewidget.Tabs.Page = CodeWidget.Codewidget.Tabs.PageNum(Extensions.Tabs.First(x => x.Key == (string)treeStore.GetValue(treeIter, 1)).Value);
-						break;
-
-					case 2:
-						Extensions.LaunchProcess("gio", "open \"" + Path.Combine(Path.GetDirectoryName(file), "Resources", (string)treeStore.GetValue(treeIter, 1)) + "\"", out _, false);
-						break;
-				}
-			});
-
-			foreach (var row in _handlers)
-			{
-				treeView.RowActivated -= row;
-			}
-			_handlers.Clear();
-
-			treeView.RowActivated += e;
-			_handlers.Add(e);
-
-			_projectNode = treeStore.AppendValues(new object[]
-			{
-				Utils.IconLoader.LoadIcon(Program.WinInstance.ProjectExplorer, "gtk-directory", IconSize.Menu),
-				ProjectManager.Project.Name
-			});
-
-			_resourcesNode = treeStore.AppendValues(_projectNode, new object[]
-			{
-				Utils.IconLoader.LoadIcon(Program.WinInstance.ProjectExplorer, "gtk-directory", IconSize.Menu),
-				"Resources"
-			});
-
-			foreach (Class @class in ProjectManager.Project.Classes)
-			{
-				var node = treeStore.AppendValues(_projectNode,
-					Extensions.GetIconFromFile(Path.Combine(Project.Path, @class.Filename)),
-					Path.GetFileName(@class.Filename)
-				);
-				_classNodes.Add(node);
-			}
-
-			foreach (string path in Directory.GetFiles(Path.Combine(Path.GetDirectoryName(file), "Resources")))
-			{
-				var node = treeStore.AppendValues(_resourcesNode,
-					Extensions.GetIconFromFile(Path.GetFullPath(path)),
-					Path.GetFileName(path)
-				);
-
-				_resourceNodes.Add(node);
-			}
 
 			var filea = "";
 
@@ -181,7 +94,7 @@ namespace iCode.Projects
 
 			foreach (var widget in _sensitiveWidgets)
 			{
-				widget.Sensitive = ProjectLoaded;
+				widget.Sensitive = (ProjectLoaded);
 			}
 
 			File.WriteAllText(Path.Combine(Program.ConfigPath, "RecentProjects"), filea);
@@ -256,10 +169,10 @@ namespace iCode.Projects
 		public static bool BuildProject()
 		{
 			Console.WriteLine("Building application...");
-			if (!Directory.Exists(Program.SDKPath) || !Directory.EnumerateFileSystemEntries(Program.SDKPath).Any())
+			if (!Directory.Exists(Program.SdkPath) || !Directory.EnumerateFileSystemEntries(Program.SdkPath).Any())
 			{
 				Console.WriteLine("Unable to build application, no SDK was provided.");
-				Extensions.ShowMessage(MessageType.Error, "Cannot build application", "SDK path is empty, add SDK to " + Program.SDKPath);
+				UIHelper.ShowModal("Cannot build application", "SDK path is empty, add SDK to " + Program.SdkPath, UIHelper.ModalCategory.Error, UIHelper.ModalActions.Ok);
 				return false;
 			}
 			var cachedir = Path.Combine(Project.Path, ".icode");
@@ -270,32 +183,33 @@ namespace iCode.Projects
 			Directory.CreateDirectory(cachedir);
 			string s = "";
 
-			Program.WinInstance.ProgressBar.PulseStep = 1.0d / (double)(((double) Project.Classes.Count(c => c.Filename.EndsWith(".m", StringComparison.CurrentCulture))) + 2d);
+			var step = 100 / (double)(((double) Project.Classes.Count(c => c.Filename.EndsWith(".m", StringComparison.CurrentCulture))) + 2d);
 
-			Program.WinInstance.ProgressBar.Fraction = 0;
+			Program.WinInstance.SetProgressValue(0);
 			
 			if (Project.Classes.Any((arg) => arg.Filename.EndsWith(".swift", StringComparison.CurrentCultureIgnoreCase)))
-				Extensions.ShowMessage(MessageType.Error, "Cannot build.", "Swift is not supported for the moment.");
+				UIHelper.ShowModal("Cannot build.", "Swift is not supported for the moment.", UIHelper.ModalCategory.Error, UIHelper.ModalActions.Ok);
                 
 			foreach (var @class in from c in Project.Classes where !c.Filename.EndsWith(".h", StringComparison.CurrentCultureIgnoreCase) select c)
 			{
-				Program.WinInstance.StateLabel.Text = "Building " + @class.Filename;
+				Program.WinInstance.SetStatusText("Building " + @class.Filename);
 				Directory.CreateDirectory(Path.Combine(cachedir, "build"));
 				var flags = string.Join(" ", Flags) + " -c " + string.Join(" ", @class.CompilerFlags) + " ";
 				var proc = Extensions.GetProcess("clang", flags + "\"" + Path.Combine(Project.Path, @class.Filename) + "\" -o \"" + Path.Combine(cachedir, "build", @class.Filename + ".output") + "\"");
-				if (Program.WinInstance.Output.Run(proc, (int)ActionCategory.Make) != 0)
+				if (Program.WinInstance.OutputWidget.Run(proc, (int)ActionCategory.Make) != 0)
 					return false;
 				s += "\"" + Path.Combine(cachedir, "build", @class.Filename + ".output") + "\" ";
-				Program.WinInstance.ProgressBar.Fraction += Program.WinInstance.ProgressBar.PulseStep;
+				Program.WinInstance.AddProgressValue(step);
 			}
-			Program.WinInstance.StateLabel.Text = "Linking";
+			Program.WinInstance.SetStatusText( "Linking");
 			Directory.CreateDirectory(Path.Combine(Project.Path, ".icode/Payload/" + Project.Name + ".app/"));
-			var process = Extensions.GetProcess("clang", "-target \"" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/target/arm64-apple-darwin14") + "\" -framework " + string.Join(" -framework ", Project.Frameworks)  + " -isysroot \"" + Program.SDKPath + "\" -arch arm64 -o \"" + Path.Combine(Project.Path, ".icode/Payload/" + Project.Name + ".app/" + Project.Name) + "\" " + s);
-			if (Program.WinInstance.Output.Run(process, (int)ActionCategory.Link) != 0)
+			var process = Extensions.GetProcess("clang", "-target \"" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/target/bin/arm64-apple-darwin14") + "\" -framework " + string.Join(" -framework ", Project.Frameworks)  + " -isysroot \"" + Program.SdkPath + "\" -arch arm64 -o \"" + Path.Combine(Project.Path, ".icode/Payload/" + Project.Name + ".app/" + Project.Name) + "\" " + s);
+
+			if (Program.WinInstance.OutputWidget.Run(process, (int)ActionCategory.Link) != 0)
 				return false;
 
-			Program.WinInstance.ProgressBar.Fraction += Program.WinInstance.ProgressBar.PulseStep;
-			Program.WinInstance.StateLabel.Text = "Packing IPA";
+			Program.WinInstance.AddProgressValue(step);
+			Program.WinInstance.SetStatusText("Packing IPA");
 			foreach (var f in Directory.GetFiles(Path.Combine(Project.Path, "Resources")))
 			{
 				File.Copy(f, Path.Combine(Project.Path, ".icode/Payload/" + Project.Name + ".app/", Path.GetFileName(f)));
@@ -318,11 +232,11 @@ namespace iCode.Projects
 			if (!File.Exists(Path.Combine(Program.DeveloperPath, "key.pem")))
 			{
 				File.Copy(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/developer/readme"), Path.Combine(Program.DeveloperPath, "readme"), true);
-				Extensions.ShowMessage(MessageType.Error, "Cannot codesign application", "No certificate found in " +  Program.DeveloperPath + ".\nRead README for information about how to place them.");
+				UIHelper.ShowModal("Cannot codesign application", "No certificate found in " +  Program.DeveloperPath + ".\nRead README for information about how to place them.", UIHelper.ModalCategory.Error, UIHelper.ModalActions.Ok);
 				return false;
 			}
 
-			Program.WinInstance.StateLabel.Text = "Signing IPA";
+			Program.WinInstance.SetStatusText("Signing IPA");
 			if (File.Exists(Path.Combine(Project.Path, "build/" + Project.Name + ".ipa")))
 				File.Delete(Path.Combine(Project.Path, "build/" + Project.Name + ".ipa"));
 
@@ -333,18 +247,18 @@ namespace iCode.Projects
 				"'" + Path.Combine(Program.DeveloperPath, "certificate.pem'"),
 				"'" + Path.Combine(Program.DeveloperPath, "provision-profile.mobileprovision'")
 			));
-
-			int i = Program.WinInstance.Output.Run(process, (int)ActionCategory.Sideload);
-			Program.WinInstance.ProgressBar.Fraction += Program.WinInstance.ProgressBar.PulseStep;
+			
+			int i = Program.WinInstance.OutputWidget.Run(process, (int)ActionCategory.Sideload);
+			Program.WinInstance.SetProgressValue(100);
 
 			return i == 0;
 		}
 
 		public static void RunProject()
 		{
-			var win = DeviceSelectorWindow.Create();
+			var win = GladeHelper.Create<DeviceSelectorWindow>();
 
-			if (win.Run() == (int) ResponseType.Ok)
+			if (win.Run() == -5)
 			{
 				JObject jobj = PList.ParsePList(new PList(win.AttributesPlist));
 
@@ -404,17 +318,17 @@ namespace iCode.Projects
 						{
 							var file = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/dmgs/" + jobj["BuildVersion"].ToString() + "/DeveloperDiskImage.dmg");
 							var fileSig = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tools/dmgs/" + jobj["BuildVersion"].ToString() + "/DeveloperDiskImage.dmg.signature");
-							Program.WinInstance.Output.Run(Extensions.GetProcess("ideviceinstaller", "-U '" + Path.Combine(Project.Path, "build/" + Project.Name + ".ipa") + "'"), (int)ActionCategory.Sideload);
+							Program.WinInstance.OutputWidget.Run(Extensions.GetProcess("ideviceinstaller", "-U '" + Path.Combine(Project.Path, "build/" + Project.Name + ".ipa") + "'"), (int)ActionCategory.Sideload);
 							Thread.Sleep(500);
-							Program.WinInstance.Output.Run(Extensions.GetProcess("ideviceinstaller", "-i '" + Path.Combine(Project.Path, "build/" + Project.Name + ".ipa") + "'"), (int)ActionCategory.Sideload);
+							Program.WinInstance.OutputWidget.Run(Extensions.GetProcess("ideviceinstaller", "-i '" + Path.Combine(Project.Path, "build/" + Project.Name + ".ipa") + "'"), (int)ActionCategory.Sideload);
 							Thread.Sleep(500);
-							Program.WinInstance.Output.Run(Extensions.GetProcess("ideviceimagemounter", "'" + file + "' '" + fileSig + "'"), (int)ActionCategory.Launch);
+							Program.WinInstance.OutputWidget.Run(Extensions.GetProcess("ideviceimagemounter", "'" + file + "' '" + fileSig + "'"), (int)ActionCategory.Launch);
 							Thread.Sleep(500);
-							Program.WinInstance.Output.Run(Extensions.GetProcess("idevicedebug", "run " + Project.BundleId), (int)ActionCategory.Launch);
+							Program.WinInstance.OutputWidget.Run(Extensions.GetProcess("idevicedebug", "run " + Project.BundleId), (int)ActionCategory.Launch);
 						}
 						catch (Exception e)
 						{
-							ExceptionWindow.Create(e, null).ShowAll();
+							GladeHelper.Create<ExceptionWindow>().ShowException(e, Program.WinInstance);
 						}
 					});
 				}

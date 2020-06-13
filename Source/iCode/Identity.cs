@@ -9,23 +9,13 @@ namespace iCode
 	public static class Identity
 	{
 		public const string ApplicationName = "iCode";
+		public const string ApplicationDescription = "An Objective-C iOS IDE for Linux";
 
 		public static Gdk.Pixbuf ApplicationIcon
 		{
 			get
 			{
-				/*
-				PixbufLoader loader = new PixbufLoader();
-				using (var res = Assembly.GetExecutingAssembly().GetManifestResourceStream("iCode.resources.images.icon.svg"))
-				using (var reader = new StreamReader(res))
-				{
-					var svg = reader.ReadToEnd();
-					loader.Write(Encoding.UTF8.GetBytes(svg));
-				}
-				return loader.Pixbuf;
-				*/
-				var pixbuf = Pixbuf.LoadFromResource("iCode.resources.images.icon.png");
-				// pixbuf.
+				var pixbuf = Pixbuf.LoadFromResource("iCode.resources.images.icon.svg");
 				return pixbuf;
 			}
 		}

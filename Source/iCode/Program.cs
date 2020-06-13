@@ -1,25 +1,18 @@
 ﻿using System;
 using System.Collections;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
-using Gdk;
-using Gdl;
+using System.Runtime.InteropServices;
 using GLib;
-using Gtk;
-using iCode.GUI;
+using iCode.GUI.Backend;
+using iCode.GUI.Backend.Interfaces;
 using iCode.Native.Appimage.Updater;
 using iCode.Settings;
 using iCode.Utils;
 using iMobileDevice;
-using iMobileDevice.MobileBackup2;
 using Newtonsoft.Json.Linq;
-using Action = Gtk.Action;
-using Extensions = iCode.Utils.Extensions;
 using Notification = iCode.Native.Notify.Notification;
 using Task = System.Threading.Tasks.Task;
 using Process = System.Diagnostics.Process;
@@ -29,7 +22,7 @@ namespace iCode
 	internal static class Program
 	{
 		public static readonly string ConfigPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "iCode/");
-		public static readonly string SDKPath = System.IO.Path.Combine(Program.ConfigPath, "SDK/");
+		public static readonly string SdkPath = System.IO.Path.Combine(Program.ConfigPath, "SDK/");
 		public static readonly string DeveloperPath = System.IO.Path.Combine(Program.ConfigPath, "Developer/");
 		public static readonly string UserDefinedTemplatesPath = System.IO.Path.Combine(Program.ConfigPath, "Templates/");
 		public static readonly string AppImagePath = Environment.GetEnvironmentVariable("APPIMAGE");
@@ -41,12 +34,17 @@ namespace iCode
 		public static bool UpdateInstalled;
 		public static JObject UpdateInfo;
 		
-		public static MainWindow WinInstance;
+		public static IMainWindow WinInstance;
+
+#if RELEASE
+		private static int GtkSourceViewSpamCount;
+#endif
 		
 		public static int Main(string[] args)
 		{
 			// Make the console use date TODO: finish implementation
-			System.Console.SetOut(new DatedConsole());
+			System.Console.SetOut(new DatedConsole(Console.Out));
+			Console.SetError(new DatedConsole(Console.Error));
 			Console.WriteLine("Initialized output.");
 			try
 			{
@@ -66,7 +64,7 @@ namespace iCode
 				
 				// Create directories if they do not exist
 				Directory.CreateDirectory(ConfigPath);
-				Directory.CreateDirectory(SDKPath);
+				Directory.CreateDirectory(SdkPath);
 				Directory.CreateDirectory(DeveloperPath);
 				Directory.CreateDirectory(UserDefinedTemplatesPath);
 				
@@ -75,10 +73,26 @@ namespace iCode
 				// Prevent the 1000203000 warnings of GTK
 				GLib.Log.SetDefaultHandler((domain, level, message) =>
 				{
-					if (level != GLib.LogLevelFlags.Error && level != GLib.LogLevelFlags.FlagFatal)
+					// if (level != GLib.LogLevelFlags.Error && level != GLib.LogLevelFlags.FlagFatal) return;
+					string lvl = level.ToString().ToUpper();
+					string dom = !string.IsNullOrWhiteSpace(domain) ? $"[{domain} {lvl}]" : "";
+
+#if RELEASE
+					if (level == LogLevelFlags.Debug)
 						return;
 
-					Console.Error.WriteLine($"Gtk error: {message} ({domain})");
+					if (domain == "GtkSourceView")
+					{
+						GtkSourceViewSpamCount++;
+						// GtkSourceView sends to many errors, so...
+						Console.Error.Write($"{domain} sent {GtkSourceViewSpamCount} logs\r"); // the last one is [{lvl}] \"{message}\". \r");
+						return;
+					}
+					
+					GtkSourceViewSpamCount = 0;
+#endif
+					
+					Console.Error.WriteLine($"{dom}: {message} ");
 				});
 
 				Console.WriteLine("Initialized GTK and GDL.");
@@ -92,28 +106,26 @@ namespace iCode
 				{
 					var settings = JObject.Parse(File.ReadAllText(SettingsPath));
 					
-					// There is 3 settings format, 1, 1.99 and 2
-					// 1 uses a bool to store update consent.
-					// 1.99 does not contains format field.
-					// So we need to convert both to format 2 ! -> And this breaks compatibility with format 1 !
+					// There is 4 settings format, 1, 1.99, 2 and 3
+					// 1 is format that uses a bool to store update consent 
+					// 1.99 is like 2 but does not contains format field.
+					// 2 is recognized by having defined json entries including a big one for update preferences
+					// 3 is actual, scalable and customizable system
 					if (settings.ContainsKey("format"))
 					{
 						// This permits to avoid compatibility breaking changes;
 						// when format is higher, iCode will not crash and will just ignore the file and warns the user
 						if ((int) settings["format"] > SettingsManager.LatestFormatSupported)
 						{
-							MessageDialog md = new MessageDialog(null, DialogFlags.Modal, MessageType.Error,
-								ButtonsType.YesNo, true,
+							var outp = UIHelper.ShowModal(
 								"iCode is unable to parse settings file. Settings file version is higher than the higher version supported by iCode. \n" +
 								"iCode is not going to take your settings in consideration and will not keep trace of your settings after reboot.\n" +
 								$"If you want to preserve settings of this version, you can move the settings file ({SettingsPath}) to another place to create a configuration of older iCode.\n" +
-								"Proceed anyway ?");
-							md.Title = "Unable to start iCode.";
-							md.ShowAll();
-							md.Present();
-							var outp = md.Run();
-							md.Dispose();
-							if (outp == (int) ResponseType.Yes)
+								"Proceed anyway ?",
+								"Unable to start iCode",
+								UIHelper.ModalCategory.Warning,
+								UIHelper.ModalActions.YesNo);
+							if (outp == -8)
 							{
 								SettingsPath = Path.GetTempFileName();
 							}
@@ -140,7 +152,7 @@ namespace iCode
 				Console.WriteLine("Initialized libimobiledevice.");
 				
 				// Actually create window
-				Program.WinInstance = MainWindow.Create();
+				Program.WinInstance = UIHelper.CreateFromInterface<IMainWindow>(); // (MainWindow) GUIHelper.CreateWindow("MainWindow");// Gtk3Helper.CreateWindow<MainWindow>();
 				Program.WinInstance.ShowAll();
 				Console.WriteLine("Initialized window.");
 				
@@ -151,7 +163,7 @@ namespace iCode
 			catch (Exception e)
 			{
 				// Create the window that will show the fatal error
-				ExceptionWindow.Create(e, null).ShowAll();
+				UIHelper.CreateFromInterface<IExceptionWindow>().ShowException(e, null);
 				return 1;
 			}
 		}
@@ -160,12 +172,15 @@ namespace iCode
 		{
 			new System.Threading.Thread(() =>
 			{
+				if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+					Console.WriteLine("No Linux = No update :(");
+				
 				// Show notification informing to user that we are updating
 				Notification notification = new Notification(Identity.ApplicationName,
 					$"{Identity.ApplicationName} is updating from v{Assembly.GetEntryAssembly().GetName().Version} to {UpdateInfo["tag_name"]}",
 					1000000000);
 				notification.SetIconFromPixbuf(
-					Pixbuf.LoadFromResource("iCode.resources.images.icon.png"));
+					Gdk.Pixbuf.LoadFromResource("iCode.resources.images.icon.png"));
 				notification.Show();
 
 				if (updater.Start())
@@ -207,7 +222,7 @@ namespace iCode
 						15000);
 
 					n.SetIconFromPixbuf(
-						Pixbuf.LoadFromResource("iCode.resources.images.icon.png"));
+						Gdk.Pixbuf.LoadFromResource("iCode.resources.images.icon.png"));
 
 					if (!updater.HasError)
 					{
@@ -284,7 +299,7 @@ killall appimagelauncherfs &> /dev/null
 								$"{Identity.ApplicationName} is ready to update from v{Assembly.GetEntryAssembly().GetName().Version} to {UpdateInfo["tag_name"]}",
 								10000);
 							notification.SetIconFromPixbuf(
-								Pixbuf.LoadFromResource("iCode.resources.images.icon.png"));
+								Gdk.Pixbuf.LoadFromResource("iCode.resources.images.icon.png"));
 							notification.AddAction("click", "Update now",
 								((ptr, action, data) => { Update(updater); }));
 							notification.Show();
